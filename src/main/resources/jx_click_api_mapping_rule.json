@@ -1,0 +1,33 @@
+{
+  "db_user":"root",
+  "db_password":"rjszgs2019",
+  "db_url":"jdbc:mysql://172.30.0.9:3306/user_db",
+  "table_name":"p_user",
+  "mapping":
+      {
+        "user_id"           :"user_id",
+        "product_id"        :"'1213'",
+        "company"           :"app_key",
+        "reg_name"          :"",
+        "nick_name"         :"",
+        "real_name"         :"",
+        "phone"             :"",
+        "email"             :"",
+        "sex"               :"",
+        "birthday"          :"",
+        "address"           :"",
+        "org_id"            :"",
+        "user_type"         :"",
+        "first_access_time" :"concat(unix_timestamp(s_create_time,'yyyy-MM-dd HH:mm:ss'),'000')",
+        "last_access_time"  :"concat(unix_timestamp(s_create_time,'yyyy-MM-dd HH:mm:ss'),'000')",
+        "last_access_ip"    :"",
+        "country"           :"",
+        "province"          :"",
+        "city"              :"",
+        "location"          :"",
+        "row_timestamp"     :"'1571988005000'",
+        "row_status"        :"'1'",
+        "put_date"          :"'20190000'"
+      },
+  "partitionsByKey":"s_create_time"
+}

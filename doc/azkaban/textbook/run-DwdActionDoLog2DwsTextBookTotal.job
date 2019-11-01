@@ -1,0 +1,665 @@
+#run-DwdActionDoLog2DwsTextBookTotal.job
+type=command
+command=sh /usr/local/spark-2.2.3-bin-hadoop2.6/bin/spark-submit \
+ --master yarn \
+ --deploy-mode cluster \
+ --num-executors 10 \
+ --executor-memory 3G \
+ --driver-memory 1G \
+ --executor-cores 2 \
+ --queue dwq \
+ --conf spark.yarn.maxAppAttempts=0 \
+ --files /usr/local/spark-2.2.3-bin-hadoop2.6/conf/hive-site.xml \
+ --class com.pep.dws.textbook.DwdActionDoLog2DwsTextBookTotal \
+ /usr/local/spark-2.2.3-bin-hadoop2.6/pep-job/yunwang-dw-1.0-SNAPSHOT.jar
+working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
+
+
+
+wget http://download.redis.io/releases/redis-4.0.11.tar.gz
+
+
+bin/mysqld --initialize --user=root --basedir=/usr/local/qinzhen/mysql-8.0.18-linux-glibc2.12-x86_64 --datadir=/usr/local/qinzhen/mysql_data
+
+
+update user set password=password("rjszgs2019") where user="root";
+
+
+ GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'rjszgs2019'  
+
+
+ mysql://root:rjszgs2019@172.30.0.3/airflow
+
+
+ mysql+pymysql://root:rjszgs2019@172.30.0.3:3306/airflow
+
+
+ alter database airflow character set 'utf8';
+
+
+ mysql+pymysql://root:rjszgs2019@172.30.0.9:3306/airflow
+
+
+id
+user_id
+[user_name]
+[user_seting]
+[org_id]
+[org_name]
+[edu_code]
+[rkxd]
+[zxxkc]
+[publisher]
+[nj]
+[fascicule]
+[year]
+[keywords]
+ctree_id   -- 教材id  --- product_id
+ctree_name  -- 教材名称  ---product_name
+[sub_heading]
+s_state -- state
+[score]
+[s_version]
+[range_type]
+[ctree_related_object]
+[view_numb]
+[down_numb]
+[s_creator]
+[s_creator_name]
+s_create_time   -- create_time
+[valid_time]
+[authorization_code]
+[authorization_type]
+---authorization_way
+end_time  --- end_time
+[reg_name]
+--row_timestamp
+--row_status
+--product   --- app_id
+--company	--- sale_channel_id
+
+
+           	                    
+          	                    
+            	                    
+           	                    
+          	                    
+           	                    
+row_timestamp       	string              	                    
+row_status          	string              	                    
+authorization_way   	string
+
+
+insert into table dwd_order_related_width partition (count_date='20200000') 
+select id,NULL,'11120101',NULL,ctree_id,ctree_name,'1',NULL,
+NULL,user_id,'110000006',NULL,s_state,s_creator_time,NULL,NULL,
+end_time,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,row_timestamp,row_status,authorization_way
+from ods.ods_jxw_platform_textbook where s_state='110';
+
+
+
+
+
+mysql -h127.0.0.1 -uroot -prjszgs2019 --default-character-set=utf8 --max_allowed_packet=1048576 --net_buffer_length=16384 jxw_web_db < a_user_ctree_rel.sql
+
+"product_id": "11120101",
+ "company": "110000006"
+
+select user_id,'11120101' as product_id,'110000006' as company,
+reg_name,NULL as nick_name,name,phone,email,NULL as sex,NULL as birthday,NULL as address,
+org_id,user_type,s_start_time as first_access_time,
+NULL as last_access_time,NULL as last_access_ip,NULL as country,NULL as province,
+NULL as city,NULL as location,s_state
+
+
+产品 	渠道	sale_count	销售模式
+
+
+
+
+insert into dwd.dwd_order_related_width partition (count_date='20200000')
+select tt.infoId,tt.detailId,tt.appId,tt.appOrderId,dws.yunwangdateformat("tbid",trim(tt.productId)),tt.productName,
+tt.quantity,tt.type,tt.code,tt.userId,tt.company,tt.companyName,tt.state,tt.create_time,
+tt.del_time,tt.start_time,tt.end_time,tt.pay_time,tt.discount,tt.beans,tt.materielCode,
+tt.materielName,tt.payChannel,tt.payPrice,tt.orderPrice,tt.price,tt.payTradeno,tt.coupons,
+tt.beanType,tt.remark,NULL,NULL,NULL from (select in.id as infoId,de.id as detailId,dws.yunwangdateformat("order",in.app_id) as appId,
+in.app_order_id as appOrderId,de.product_id as productId,de.product_name as productName,de.quantity as quantity,
+de.type as type,de.code as code,in.user_id as userId,dws.yunwangdateformat("order",in.sale_channel_id) as company,
+in.sale_channel_name as companyName,in.s_state as state,
+from_unixtime(unix_timestamp(split(in.s_create_time,' ')[0],'yyyy-MM-dd'),'yyyyMMdd') as create_time,
+from_unixtime(unix_timestamp(split(in.s_delete_time,' ')[0],'yyyy-MM-dd'),'yyyyMMdd') as del_time,
+from_unixtime(unix_timestamp(split(de.start_time,' ')[0],'yyyy-MM-dd'),'yyyyMMdd') as start_time,
+from_unixtime(unix_timestamp(split(de.end_time,' ')[0],'yyyy-MM-dd'),'yyyyMMdd') as end_time,
+from_unixtime(unix_timestamp(split(in.pay_time,' ')[0],'yyyy-MM-dd'),'yyyyMMdd') as pay_time,
+in.discount as discount,in.beans as beans,de.materiel_code as materielCode,de.materiel_name as materielName,
+in.pay_channel as payChannel,in.pay_price as payPrice,in.order_price as orderPrice,de.price as price,
+in.pay_tradeno as payTradeno,in.coupons as coupons,in.bean_type as beanType,in.remark as remark,
+de.count_date as countDate,row_number() over(partition by in.id,de.id,in.app_id,in.app_order_id,in.user_id
+order by in.id,de.id,in.app_id,in.app_order_id,in.user_id) as rank from
+(select * from (select *,row_number() over(partition by app_id,app_order_id,product_id order by app_id) as rank
+from ods_order_detail where count_date<='20191015') as tmp2
+where tmp2.rank=1) as de inner join
+(select * from (select *,row_number() over(partition by app_id,app_order_id order by app_id) as rank
+from ods_order_info where count_date<='20191015') as tmp1
+where tmp1.rank=1) as in on
+de.app_order_id=in.app_order_id) as tt where tt.rank=1;
+
+
+
+
+
+
+
+from dwd_order_related_width where count_date='20200000' 
+
+
+
+
+
+create view temp_view_tt2 as (
+select tep1.app_id as product_id,tep1.sale_channel_id as company,tep1.user_id as user_id,tep1.product_id as passive_obj,
+dws.geteducode(tep1.product_id,'zxxkc') as zxxkc,dws.geteducode(tep1.product_id,'nj') as nj,
+tep1.quantity as quantity,tep2.country as country,tep2.province as province,tep1.pay_time as pay_time,tep1.authorization_way from 
+(select app_id,sale_channel_id,user_id,quantity,product_id,pay_time,authorization_way 
+from dwd.dwd_order_related_width where count_date='20200000') as tep1 left join
+(select t.active_user,t.country,t.province,t.company,t.product_id from
+(select tmp.active_user,tmp.product_id,tmp.company,tmp.country,tmp.province,
+row_number() over(partition by tmp.active_user,tmp.product_id,tmp.company
+order by tmp.cou desc) as rank from (select active_user,product_id,company,
+country,province,count(1) as cou from dwd.dwd_user_area where count_date='20191015'
+group by active_user,product_id,company,country,province) as tmp ) as t where t.rank=1 ) as tep2
+on tep1.user_id=tep2.active_user and tep1.app_id=tep2.product_id and tep1.sale_channel_id=tep2.company);
+
+
+
+
+
+select * from 
+(select product_id as product,company as company,ceil(sum(sale_count)) 
+as sv from ads_order_entity_total where company is not null and product_id 
+is not null and company!='' and product_id!='' and count_date='20200000' 
+group by product_id,company order by product,sv) as t1 left join 
+(select app_id,sale_channel_id,authorization_way,count(1) from dwd.dwd_order_related_width 
+where count_date='20200000' and nvl(authorization_way,'')!='' and authorization_way!='null' 
+group by app_id,sale_channel_id,authorization_way) as t2 on t1.product=t2.app_id and 
+t1.company=t2.sale_channel_id;
+
+
+
+
+insert into table ads_order_entity_total partition(count_date='${yesStr}')
+select product_id,company,passive_obj,dws.geteducode(passive_obj,'zxxkc') as zxxkc,
+dws.geteducode(passive_obj,'nj') as nj,authorization_way,count(distinct(user_id)) as user_count,
+sum(quantity) as sale_count from temp_view_tt2 
+group by product_id,company,passive_obj,authorization_way limit 22
+
+
+
+
+create table if not exists ads_order_entity_total(
+product_id string,
+company string,
+authorize_way string,
+passive_obj string,
+zxxkc string,
+nj string,
+user_count string,
+sale_count string
+) partitioned by (count_date string) stored as textfile;
+
+
+
+
+
+create view temp_view_tt3 as (
+select tep1.app_id as product_id,tep1.sale_channel_id as company,tep1.user_id as user_id,tep1.product_id as passive_obj,
+dws.geteducode(tep1.product_id,'zxxkc') as zxxkc,dws.geteducode(tep1.product_id,'nj') as nj,
+tep1.quantity as quantity,tep2.country as country,tep2.province as province,tep1.pay_time as pay_time,tep1.authorization_way from
+(select app_id,sale_channel_id,user_id,quantity,product_id,pay_time,authorization_way
+from dwd.dwd_order_related_width where count_date='20200000') as tep1 left join
+(select t.active_user,t.country,t.province,t.company,t.product_id from
+(select tmp.active_user,tmp.product_id,tmp.company,tmp.country,tmp.province,
+row_number() over(partition by tmp.active_user,tmp.product_id,tmp.company
+order by tmp.cou desc) as rank from (select active_user,product_id,company,
+country,province,count(1) as cou from dwd.dwd_user_area where count_date='20191015'
+group by active_user,product_id,company,country,province) as tmp ) as t where t.rank=1 ) as tep2
+on tep1.user_id=tep2.active_user and tep1.app_id=tep2.product_id and tep1.sale_channel_id=tep2.company);
+
+
+
+insert into table ads_order_entity_total partition(count_date='20200000')
+select product_id,company,authorization_way,passive_obj,dws.geteducode(passive_obj,'zxxkc') as zxxkc,
+dws.geteducode(passive_obj,'nj') as nj,count(distinct(user_id)) as user_count,
+sum(quantity) as sale_count from temp_view_tt3 group by product_id,company,passive_obj,authorization_way
+
+
+select authorize_way,sum(cast(sale_count as NUMERIC))
+from ads_order_entity_total group by authorize_way where count_date='20190926';
+
+
+
+
+select t1.product,t1.company,t2.authorize_way,(case when t2.authorize_way is null then t1.sv else t2.temp end) as sv from 
+(select product_id as product,company as company,ceil(sum(cast(sale_count as NUMERIC))) as sv from ads_order_entity_total 
+where company is not null and product_id is not null and company!='' and product_id!='' 
+and count_date=? group by product_id,company) as t1 left join 
+(select product_id,company,authorize_way,sum(cast(sale_count as NUMERIC)) as temp
+from ads_order_entity_total where count_date=? and  
+authorize_way is not null and authorize_way!='null' group by product_id,company,
+authorize_way) as t2 on t1.product=t2.product_id and t1.company=t2.company order by t1.product,t1.sv desc,t2.temp desc
+
+
+
+{
+            "人教点读": {
+                "product": "人教点读",
+                "sv": [
+                    "102",
+                    "13781",
+                    "1445521",
+                    "14983",
+                    "168878",
+                    "26211",
+                    "2669",
+                    "288508",
+                    "297",
+                    "431961",
+                    "4866",
+                    "48702",
+                    "555354",
+                    "573",
+                    "68691",
+                    "903"
+                ],
+                "company": [
+                    "中文在线",
+                    "喜马拉雅",
+                    "一起作业网",
+                    "小学宝",
+                    "可可宝贝",
+                    "趣配音",
+                    "创而新",
+                    "人教口语",
+                    "中青汇智",
+                    "作业盒子",
+                    "书链",
+                    "测试第三方",
+                    "北京智慧流",
+                    "中泰治本",
+                    "自营充值",
+                    "同步音频"
+                ]
+            },
+            "人教微研": {
+                "product": "人教微研",
+                "sv": [
+                    "126",
+                    "1274",
+                    "1605",
+                    "2267",
+                    "4055",
+                    "5896",
+                    "652"
+                ],
+                "company": [
+                    "初中数学",
+                    "初中道德与法治",
+                    "小学道德与法治",
+                    "初中语文",
+                    "小学语文",
+                    "小学数学",
+                    "初中历史"
+                ]
+            },
+            "人教口语": {
+                "product": "人教口语",
+                "sv": [
+                    "1862",
+                    "2454",
+                    "36",
+                    "4901",
+                    "56214",
+                    "703",
+                    "738"
+                ],
+                "company": [
+                    "大咖讲教材",
+                    "口语闯关玩",
+                    "教材配音秀",
+                    "会员",
+                    "教材点读",
+                    "外教视频",
+                    "教材磨耳朵"
+                ]
+            },
+            "日语训练营": {
+                "product": "日语训练营",
+                "sv": [
+                    "20995"
+                ],
+                "company": [
+                    "标日购买"
+                ]
+            }
+        },
+        {
+            "人教点读": {
+                "product": "人教点读",
+                "sv": [
+                    "102",
+                    "13781",
+                    "1445521",
+                    "14983",
+                    "168878",
+                    "26211",
+                    "2669",
+                    "288508",
+                    "297",
+                    "431961",
+                    "4866",
+                    "48702",
+                    "555354",
+                    "573",
+                    "68691",
+                    "903"
+                ],
+                "company": [
+                    "中文在线",
+                    "喜马拉雅",
+                    "一起作业网",
+                    "小学宝",
+                    "可可宝贝",
+                    "趣配音",
+                    "创而新",
+                    "人教口语",
+                    "中青汇智",
+                    "作业盒子",
+                    "书链",
+                    "测试第三方",
+                    "北京智慧流",
+                    "中泰治本",
+                    "自营充值",
+                    "同步音频"
+                ]
+            },
+            "人教微研": {
+                "product": "人教微研",
+                "sv": [
+                    "126",
+                    "1274",
+                    "1605",
+                    "2267",
+                    "4055",
+                    "5896",
+                    "652"
+                ],
+                "company": [
+                    "初中数学",
+                    "初中道德与法治",
+                    "小学道德与法治",
+                    "初中语文",
+                    "小学语文",
+                    "小学数学",
+                    "初中历史"
+                ]
+            },
+            "人教口语": {
+                "product": "人教口语",
+                "sv": [
+                    "1862",
+                    "2454",
+                    "36",
+                    "4901",
+                    "56214",
+                    "703",
+                    "738"
+                ],
+                "company": [
+                    "大咖讲教材",
+                    "口语闯关玩",
+                    "教材配音秀",
+                    "会员",
+                    "教材点读",
+                    "外教视频",
+                    "教材磨耳朵"
+                ]
+            },
+            "日语训练营": {
+                "product": "日语训练营",
+                "sv": [
+                    "20995"
+                ],
+                "company": [
+                    "标日购买"
+                ]
+            }
+        },
+        {
+            "人教点读": 
+            "人教微研": 
+            "人教口语": 
+            "日语训练营": 
+        },
+        {
+            "人教点读": ,
+            "人教微研":,
+            "人教口语": ,
+            "日语训练营": 
+        }.
+
+
+
+
+  [
+        {
+            "product": "日语训练营",
+            "company": "标日购买",
+            "way": null,
+            "sv": 20995
+        },
+        {
+            "product": "智慧教学平台",
+            "company": "人教自营版",
+            "way": "03",
+            "sv": 492809.0
+        },
+        {
+            "product": "智慧教学平台",
+            "company": "人教自营版",
+            "way": "04",
+            "sv": 43578.0
+        },
+        {
+            "product": "智慧教学平台",
+            "company": "人教自营版",
+            "way": "01",
+            "sv": 2140.0
+        },
+        {
+            "product": "智慧教学平台",
+            "company": "人教自营版",
+            "way": "02",
+            "sv": 1107.0
+        },
+        {
+            "product": "人教点读",
+            "company": "一起作业网",
+            "way": null,
+            "sv": 1445521
+        },
+        {
+            "product": "人教点读",
+            "company": "北京智慧流",
+            "way": null,
+            "sv": 555354
+        },
+        {
+            "product": "人教点读",
+            "company": "作业盒子",
+            "way": null,
+            "sv": 431961
+        },
+        {
+            "product": "人教点读",
+            "company": "人教口语",
+            "way": null,
+            "sv": 288508
+        },
+        {
+            "product": "人教点读",
+            "company": "可可宝贝",
+            "way": null,
+            "sv": 168878
+        },
+        {
+            "product": "人教点读",
+            "company": "自营充值",
+            "way": null,
+            "sv": 68691
+        },
+        {
+            "product": "人教点读",
+            "company": "测试第三方",
+            "way": null,
+            "sv": 48702
+        },
+        {
+            "product": "人教点读",
+            "company": "趣配音",
+            "way": null,
+            "sv": 26211
+        },
+        {
+            "product": "人教点读",
+            "company": "小学宝",
+            "way": null,
+            "sv": 14983
+        },
+        {
+            "product": "人教点读",
+            "company": "喜马拉雅",
+            "way": null,
+            "sv": 13781
+        },
+        {
+            "product": "人教点读",
+            "company": "书链",
+            "way": null,
+            "sv": 4866
+        },
+        {
+            "product": "人教点读",
+            "company": "创而新",
+            "way": null,
+            "sv": 2669
+        },
+        {
+            "product": "人教点读",
+            "company": "同步音频",
+            "way": null,
+            "sv": 903
+        },
+        {
+            "product": "人教点读",
+            "company": "中泰治本",
+            "way": null,
+            "sv": 573
+        },
+        {
+            "product": "人教点读",
+            "company": "中青汇智",
+            "way": null,
+            "sv": 297
+        },
+        {
+            "product": "人教点读",
+            "company": "中文在线",
+            "way": null,
+            "sv": 102
+        },
+        {
+            "product": "人教口语",
+            "company": "教材点读",
+            "way": null,
+            "sv": 56214
+        },
+        {
+            "product": "人教口语",
+            "company": "会员",
+            "way": null,
+            "sv": 4901
+        },
+        {
+            "product": "人教口语",
+            "company": "口语闯关玩",
+            "way": null,
+            "sv": 2454
+        },
+        {
+            "product": "人教口语",
+            "company": "大咖讲教材",
+            "way": null,
+            "sv": 1862
+        },
+        {
+            "product": "人教口语",
+            "company": "教材磨耳朵",
+            "way": null,
+            "sv": 738
+        },
+        {
+            "product": "人教口语",
+            "company": "外教视频",
+            "way": null,
+            "sv": 703
+        },
+        {
+            "product": "人教口语",
+            "company": "教材配音秀",
+            "way": null,
+            "sv": 36
+        },
+        {
+            "product": "人教微研",
+            "company": "小学数学",
+            "way": null,
+            "sv": 5896
+        },
+        {
+            "product": "人教微研",
+            "company": "小学语文",
+            "way": null,
+            "sv": 4055
+        },
+        {
+            "product": "人教微研",
+            "company": "初中语文",
+            "way": null,
+            "sv": 2267
+        },
+        {
+            "product": "人教微研",
+            "company": "小学道德与法治",
+            "way": null,
+            "sv": 1605
+        },
+        {
+            "product": "人教微研",
+            "company": "初中道德与法治",
+            "way": null,
+            "sv": 1274
+        },
+        {
+            "product": "人教微研",
+            "company": "初中历史",
+            "way": null,
+            "sv": 652
+        },
+        {
+            "product": "人教微研",
+            "company": "初中数学",
+            "way": null,
+            "sv": 126
+        }
+    ],

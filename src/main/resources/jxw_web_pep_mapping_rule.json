@@ -1,0 +1,33 @@
+{
+  "db_user":"root",
+  "db_password":"rjszgs2019",
+  "db_url":"jdbc:mysql://172.30.0.9:3306/jxw_web_db",
+  "table_name":"a_user",
+  "mapping":
+      {
+        "user_id"           :"user_id",
+        "product_id"        :"'11120101'",
+        "company"           :"'110000006'",
+        "reg_name"          :"reg_name",
+        "nick_name"         :"name",
+        "real_name"         :"name",
+        "phone"             :"phone",
+        "email"             :"email",
+        "sex"               :"",
+        "birthday"          :"",
+        "address"           :"",
+        "org_id"            :"org_id",
+        "user_type"         :"user_type",
+        "first_access_time" :"concat(unix_timestamp(s_create_time,'yyyy-MM-dd HH:mm:ss'),'000')",
+        "last_access_time"  :"concat(unix_timestamp(s_create_time,'yyyy-MM-dd HH:mm:ss'),'000')",
+        "last_access_ip"    :"",
+        "country"           :"",
+        "province"          :"",
+        "city"              :"",
+        "location"          :"",
+        "row_timestamp"     :"'1571988005000'",
+        "row_status"        :"'1'",
+        "put_date"          :"'20190001'"
+      },
+  "partitionsByKey":"random_code"
+}

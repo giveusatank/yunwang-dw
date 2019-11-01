@@ -1,0 +1,6 @@
+#yunwang-bi-show.job
+type=command
+command=sh /usr/local/spark-2.2.3-bin-hadoop2.6/pep-job/record-yunwang-bi-date.sh
+dependencies=yunwangdw-daily-paper
+notify.emails=giveusatankqz@foxmail.com,zhangfz@pep.com.cn,smile46227@163.com,szsj@pep.com.cn
+working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
