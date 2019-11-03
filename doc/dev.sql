@@ -26,7 +26,7 @@ on a.device_id=b.device_id and a.product_id=b.product_id and a.company=b.company
 表c  业务库中的新用户注册数  c和t join 出新增用户注册数占注册用户的比例，反集取出游客注册的比例
 表d  每日访客中是游客的用户数  d和t join 出游客注册转化率
 
-select t.product_id,t.company,c.cu as bus_reg,t.new_reg ,(c.cu-t.new_reg) as tou_reg,new_reg/c.cu as new_reg_ratio,(c.cu-t.new_reg)/d.tou_cu from (
+select t.product_id,t.company,c.cu as bus_reg,t.new_reg ,(c.cu-t.new_reg) as tou_reg,round(new_reg/c.cu,2) as new_reg_ratio,round((c.cu-t.new_reg)/d.tou_cu,2) from (
 select b.product_id,count(DISTINCT (b.user_id)) as new_reg,b.company from (-- 新用户注册数
 select aa.product_id,aa.company,aa.active_user from dws.dws_uv_total aa join ( -- 采集注册用户中设备当日首次出现为新用户ID
 select device_id,product_id,company from dws.dws_uv_increase where nvl(active_user,'')!='' and count_date='20191028' group by device_id,product_id,company -- 新用户表中的注册用户（新注册、游客注册）的设备ID
