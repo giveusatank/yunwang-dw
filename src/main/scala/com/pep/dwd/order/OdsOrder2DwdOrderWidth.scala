@@ -88,27 +88,58 @@ object OdsOrder2DwdOrderWidth {
         |remark string,
         |row_timestamp string,
         |row_status string,
-        |authorization_way string
-        |) partitioned by (count_date string)
+        |authorization_way string,
+        |count_date string )
         |stored as parquet
       """.stripMargin
 
     spark.sql(createSql)
     spark.sql("use ods")
+
+    val createSqlOrderInfo =
+      """
+        |CREATE TABLE if not exists ods.ods_order_info(`id` string COMMENT 'from deserializer', `app_id` string COMMENT 'from deserializer', `app_order_id` string COMMENT 'from deserializer', `user_id` string COMMENT 'from deserializer', `user_name` string COMMENT 'from deserializer', `sale_channel_id` string COMMENT 'from deserializer', `sale_channel_name` string COMMENT 'from deserializer', `s_state` string COMMENT 'from deserializer', `s_create_time` string COMMENT 'from deserializer',
+        |`s_delete_time`
+        |string COMMENT 'from deserializer', `order_price` string COMMENT 'from deserializer', `discount` string COMMENT 'from deserializer', `pay_channel` string COMMENT 'from deserializer', `pay_time` string COMMENT 'from deserializer', `pay_price` string COMMENT 'from deserializer', `pay_tradeno` string COMMENT 'from deserializer', `remark` string COMMENT 'from deserializer', `beans` string COMMENT 'from deserializer', `bean_type` string COMMENT 'from deserializer', `coupons` string COMMENT 'from deserializer', `row_timestamp` string COMMENT 'from deserializer', `row_status` string COMMENT 'from deserializer')
+        |    PARTITIONED BY (`count_date` string)
+        |    ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+        |    WITH SERDEPROPERTIES (
+        |      'serialization.format' = '1'
+        |    )
+        |    STORED AS
+        |      INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
+        |    OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+      """.stripMargin
+    spark.sql(createSqlOrderInfo)
+
+    val createSqlOrderDetail =
+      """
+        |CREATE TABLE if not exists ods.ods_order_detail(`id` string COMMENT 'from deserializer', `app_id` string COMMENT 'from deserializer', `app_order_id` string COMMENT 'from deserializer', `product_id` string COMMENT 'from deserializer', `product_name` string COMMENT 'from deserializer', `price` string COMMENT 'from deserializer',
+        | `quantity` string COMMENT 'from deserializer', `type` string COMMENT 'from deserializer', `code` string COMMENT 'from deserializer', `start_time` string COMMENT
+        |'from
+        |deserializer', `end_time` string COMMENT 'from deserializer', `beans` string COMMENT 'from deserializer', `materiel_code` string COMMENT 'from deserializer', `materiel_name` string COMMENT 'from deserializer', `row_timestamp` string COMMENT 'from deserializer', `row_status` string COMMENT 'from deserializer')
+        |    PARTITIONED BY (`count_date` string)
+        |    ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+        |    WITH SERDEPROPERTIES (
+        |      'serialization.format' = '1'
+        |    )
+        |    STORED AS
+        |      INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
+        |    OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+      """.stripMargin
+    spark.sql(createSqlOrderDetail)
+
     spark.sql("msck repair table ods_order_info")
     spark.sql("msck repair table ods_order_detail")
-    //先删除dwd_order_related_width的前天的分区
-    spark.sql(s"alter table dwd.dwd_order_related_width drop if exists partition (count_date='${beforeYesStr}')")
-    spark.sql(s"alter table dwd.dwd_order_related_width drop if exists partition (count_date='${yesStr}')")
 
     val insertSql =
       s"""
-         |insert into dwd.dwd_order_related_width partition (count_date='${yesStr}')
+         |insert into dwd.dwd_order_related_width
          |select tt.infoId,tt.detailId,if(tt.company='pep_click','121301',tt.appId),tt.appOrderId,dws.yunwangdateformat("tbid",trim(tt.productId)),tt.productName,
          |tt.quantity,tt.type,tt.code,tt.userId,tt.company,tt.companyName,tt.state,tt.create_time,
          |tt.del_time,tt.start_time,tt.end_time,tt.pay_time,tt.discount,tt.beans,tt.materielCode,
          |tt.materielName,tt.payChannel,tt.payPrice,tt.orderPrice,tt.price,tt.payTradeno,tt.coupons,
-         |tt.beanType,tt.remark,tt.rt,tt.rs,NULL from (select in.id as infoId,de.id as detailId,dws.yunwangdateformat("order",in.app_id) as appId,
+         |tt.beanType,tt.remark,tt.rt,tt.rs,'01','${yesStr}' from (select in.id as infoId,de.id as detailId,dws.yunwangdateformat("order",in.app_id) as appId,
          |in.app_order_id as appOrderId,de.product_id as productId,de.product_name as productName,de.quantity as quantity,
          |de.type as type,de.code as code,in.user_id as userId,dws.yunwangdateformat("order",in.sale_channel_id) as company,
          |in.sale_channel_name as companyName,in.s_state as state,

@@ -62,11 +62,9 @@ object DwsUvTotal2DwdUserArea {
 
     spark.sql(createSql)
 
-    spark.sql("truncate table dwd.dwd_user_area")
-
     val etlSql =
       s"""
-        |insert into dwd.dwd_user_area
+        |insert overwrite table dwd.dwd_user_area
         |select product_id,company,remote_addr,country,province,city,
         |location,active_user,count_date from dws.dws_uv_total where nvl(active_user,'')!=''
       """.stripMargin

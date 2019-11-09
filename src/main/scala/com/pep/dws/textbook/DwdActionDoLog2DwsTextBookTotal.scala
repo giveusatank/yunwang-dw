@@ -42,13 +42,12 @@ object DwdActionDoLog2DwsTextBookTotal {
       |    stored as parquet
     """.stripMargin
     spark.sql(_sql1)
-    spark.sql(s"alter table dws.dws_textbook_used_session drop if exists partition(count_date=${yesStr})")
     //将action_do_log中的数据导入dws_textbook_used_session中
     //if(locate(',',passive_obj) > 0 ,split(passive_obj,',')[1],passive_obj)
     //dws.yunwangdateformat('tbid','tape4b_002003') : 将老版本的教材Id转换为新版本的教材Id
     val sql =
     s"""
-       |insert into dws.dws_textbook_used_session partition (count_date)
+       |insert overwrite table dws.dws_textbook_used_session partition (count_date)
        |select product_id,
        |       dws.yunwangDateFormat('company',company),
        |       country,
@@ -113,7 +112,7 @@ object DwdActionDoLog2DwsTextBookTotal {
     //将dws_textbook_used_session表中的数据清洗到dws_textbook_used_daily表
     val sql1 =
       s"""
-         |insert into dws_textbook_used_daily partition (count_date)
+         |insert overwrite table dws_textbook_used_daily partition (count_date)
          |select product_id,
          |       company,
          |       country,
@@ -294,7 +293,7 @@ object DwdActionDoLog2DwsTextBookTotal {
     // dws.getEduCode(passive_obj,'zxxkc')
     val sql2 =
     s"""
-       |insert into dws_textbook_used_total_wide
+       |insert overwrite table dws_textbook_used_total_wide
        |select product_id,
        |       company,
        |       country,

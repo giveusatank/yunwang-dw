@@ -52,10 +52,9 @@ object OdsActionLog2DwdActionDoLog {
     spark.sql("use dwd")
     //刷新一下action_log_ot的分区信息
     spark.sql("msck repair table ods.action_log")
-    spark.sql(s"alter table action_do_log drop if exists partition(put_date=${yesterdayStr})")
     val sql =
       s"""
-         |insert into action_do_log PARTITION (put_date)
+         |insert overwrite table action_do_log PARTITION (put_date)
          |select *
          |from (select id,
          |             remote_addr,

@@ -3,7 +3,7 @@ package com.pep.ads.rj
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Date}
 
-import com.pep.common.Constants
+import com.pep.common.{Constants, DbProperties}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
@@ -32,10 +32,9 @@ object DwdActionDoLog2AdsRjWebSummary {
         |    stored as textfile
       """.stripMargin
     spark.sql(createSql)
-    spark.sql(s"alter table ads.ads_rj_dpi_daily drop if exists partition(count_date=${yestStr})")
     val insertSql =
       s"""
-         |insert into ads_rj_dpi_daily partition (count_date)
+         |insert overwrite table ads_rj_dpi_daily partition (count_date)
          |select product_id,
          |       company,
          |       str_to_map(nvl(hardware, "dpi:null"), ',', ':')['dpi'],
@@ -70,10 +69,9 @@ object DwdActionDoLog2AdsRjWebSummary {
         |    stored as textfile
       """.stripMargin
     spark.sql(createSql)
-    spark.sql(s"alter table ads.ads_rj_browser_daily drop if exists partition(count_date=${yestStr})")
     val insertSql =
       s"""
-         |insert into ads_rj_browser_daily partition (count_date)
+         |insert overwrite table ads_rj_browser_daily partition (count_date)
          |select product_id,
          |       company,
          |       str_to_map(nvl(soft, "b-type:null"), '\\/', ':')['b-type'],
@@ -111,10 +109,9 @@ object DwdActionDoLog2AdsRjWebSummary {
         |    stored as textfile
       """.stripMargin
     spark.sql(createSql)
-    spark.sql(s"alter table ads.ads_rj_access_count_daily drop if exists partition(count_date=${yestStr})")
     val insertSql =
       s"""
-         |insert into ads_rj_access_count_daily partition (count_date)
+         |insert overwrite table ads_rj_access_count_daily partition (count_date)
          |select t.product_id,
          |       t.company,
          |       t.country,
@@ -169,10 +166,9 @@ object DwdActionDoLog2AdsRjWebSummary {
         |    stored as textfile
       """.stripMargin
     spark.sql(createSql)
-    spark.sql(s"alter table ads.ads_rj_access_browse_pages_daily drop if exists partition(count_date=${yestStr})")
     val insertSql =
       s"""
-         |insert into ads_rj_access_browse_pages_daily partition (count_date)
+         |insert overwrite table ads_rj_access_browse_pages_daily partition (count_date)
          |select t.product_id,
          |       t.company,
          |       t.country,
@@ -224,10 +220,9 @@ object DwdActionDoLog2AdsRjWebSummary {
         |    stored as textfile
       """.stripMargin
     spark.sql(createSql)
-    spark.sql(s"alter table ads.ads_rj_ip_daily drop if exists partition(count_date=${yestStr})")
     val insertSql =
       s"""
-         |insert into ads_rj_ip_daily partition (count_date)
+         |insert overwrite table ads_rj_ip_daily partition (count_date)
          |select product_id,
          |       company,
          |       country,
@@ -267,10 +262,9 @@ object DwdActionDoLog2AdsRjWebSummary {
         |    stored as textfile
       """.stripMargin
     spark.sql(createSql)
-    spark.sql(s"alter table ads.ads_rj_access_statistic_daily drop if exists partition(count_date=${yestStr})")
     val insertSql =
       s"""
-         |insert into ads_rj_access_statistic_daily partition (count_date)
+         |insert overwrite table ads_rj_access_statistic_daily partition (count_date)
          |select product_id,
          |       company,
          |       country,
@@ -291,10 +285,7 @@ object DwdActionDoLog2AdsRjWebSummary {
   //将人教网相关的Ads层数据写入PostgreSQL
   def writeAdsRjWebRelated2PostgreSQL(spark: SparkSession, yestStr: String): Unit = {
 
-    val props = new java.util.Properties()
-    props.setProperty("user","pgadmin")
-    props.setProperty("password","szkf2019")
-    props.setProperty("url","jdbc:postgresql://172.30.0.9:5432/bi")
+    val props = DbProperties.propScp
     props.setProperty("tableName_1","ads_rj_access_browse_pages_daily")
     props.setProperty("tableName_2","ads_rj_access_count_daily")
     props.setProperty("tableName_3","ads_rj_access_statistic_daily")

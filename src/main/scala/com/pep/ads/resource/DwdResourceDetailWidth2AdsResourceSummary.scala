@@ -6,6 +6,9 @@ import org.apache.spark.SparkConf
 
 import scala.util.control.Breaks
 
+/**
+  * 一期无用任务
+  */
 object DwdResourceDetailWidth2AdsResourceSummary {
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setAppName("RUN-DwdResourceDetailWidth2AdsResourceSummary").set("spark.sql.shuffle.partitions", Constants.ads_shuffle_partitions)

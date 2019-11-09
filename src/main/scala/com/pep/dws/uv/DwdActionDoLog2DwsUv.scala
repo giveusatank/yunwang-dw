@@ -37,10 +37,9 @@ object DwdActionDoLog2DwsUv {
         |STORED AS parquet
       """.stripMargin
     spark.sql(createSql)
-    spark.sql(s"alter table dws.dws_uv_session_daily drop if exists partition(count_date=${yestStr})")
     val _sql1 =
       s"""
-         |insert into dws.dws_uv_session_daily partition (count_date)
+         |insert overwrite table dws.dws_uv_session_daily partition (count_date)
          |select product_id,
          |       dws.yunwangDateFormat('company',company) as company,
          |       remote_addr,
@@ -97,10 +96,9 @@ object DwdActionDoLog2DwsUv {
         |STORED AS parquet
       """.stripMargin
     spark.sql(createSql)
-    spark.sql(s"alter table dws.dws_uv_daily drop if exists partition(count_date=${yestStr})")
     val _sql1 =
       s"""
-         |insert into dws.dws_uv_daily partition (count_date)
+         |insert overwrite table dws.dws_uv_daily partition (count_date)
          |select product_id,
          |       company,
          |       remote_addr,
@@ -203,7 +201,7 @@ object DwdActionDoLog2DwsUv {
 
     val insertTotalSql =
       s"""
-         |insert into dws.dws_uv_total
+         |insert into  dws.dws_uv_total
          |select product_id,
          |       company,
          |       split(max(concat(last_access_time, '-', remote_addr)), '-')[1] as last_remote_addr,
@@ -267,11 +265,10 @@ object DwdActionDoLog2DwsUv {
       """.stripMargin
 
     spark.sql(createSql)
-    spark.sql(s"alter table dws.dws_uv_increase drop if exists partition(count_date=${yestStr})")
     //1.插入增量数据
     val insertSql =
       s"""
-         |insert into dws.dws_uv_increase partition (count_date)
+         |insert overwrite table dws.dws_uv_increase partition (count_date)
          |select product_id,
          |       company,
          |       remote_addr,

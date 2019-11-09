@@ -3,7 +3,7 @@ package com.pep.ads.resource
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Date}
 
-import com.pep.common.Constants
+import com.pep.common.{Constants, DbProperties}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
@@ -41,13 +41,9 @@ object DwdZykResource2AdsZykResource {
     spark.sql("msck repair table dwd.dwd_resource_zyk")
     spark.sql("msck repair table ads.ads_resource_jxw")
 
-    spark.sql(s"alter table ads.ads_resource_zyk drop if exists partition(count_date=${yestStr})")
-
-    //创建时间小于20191016为资源加工库元数据
-    //select split(chapter_ids,'\,')[size(split(chapter_ids,'\,'))-1] as chapter_id,rid from (select explode(split(tid1_path,'\\|')) as chapter_ids,rid  from ods.ods_zyk_pep_cn_resource where tid1_path like  '%|%' limit 1);
     val insertSql =
       s"""
-         |insert into table ads_resource_zyk partition(count_date)
+         |insert overwrite table ads_resource_zyk partition(count_date)
          |select
          |tb_id,
          |'' as tb_state,
@@ -81,10 +77,8 @@ object DwdZykResource2AdsZykResource {
       """.stripMargin
     val readDate = spark.sql(selectSql)
 
-    val props = new java.util.Properties()
-    props.setProperty("user","pgadmin")
-    props.setProperty("password","123456")
-    props.setProperty("url","jdbc:postgresql://192.168.186.36:5432/bi")
+    val props = DbProperties.propScp
+
     var writeDF = readDate.coalesce(5)
     writeDF.write.format("jdbc").
       mode("append").

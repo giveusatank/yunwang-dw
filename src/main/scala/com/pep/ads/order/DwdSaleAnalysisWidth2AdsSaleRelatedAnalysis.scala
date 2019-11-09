@@ -175,9 +175,8 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
         |country string,
         |province string,
         |user_count string,
-        |sale_count string,
-        |count_date string
-        |) stored as parquet
+        |sale_count string
+        |) partitioned by (count_date string)  stored as parquet
       """.stripMargin
 
     //创建销售相关的Ads层表
@@ -202,12 +201,12 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
         |tep1.quantity as quantity,tep2.country as country,tep2.province as province,tep1.pay_time as pay_time,
         |tep1.authorization_way,tep1.row_status,tep1.row_timestamp from
         |(select app_id,sale_channel_id,user_id,quantity,product_id,pay_time,authorization_way,row_status,row_timestamp
-        |from dwd.dwd_order_related_width where count_date='${yesStr}') as tep1 left join
+        |from dwd.dwd_order_related_width) as tep1 left join
         |(select t.active_user,t.country,t.province,t.company,t.product_id from
         |(select tmp.active_user,tmp.product_id,tmp.company,tmp.country,tmp.province,
         |row_number() over(partition by tmp.active_user,tmp.product_id,tmp.company
         |order by tmp.cou desc) as rank from (select active_user,product_id,company,
-        |country,province,count(1) as cou from dwd.dwd_user_area where count_date='${yesStr}'
+        |country,province,count(1) as cou from dwd.dwd_user_area
         |group by active_user,product_id,company,country,province) as tmp ) as t where t.rank=1 ) as tep2
         |on tep1.user_id=tep2.active_user and tep1.app_id=tep2.product_id and tep1.sale_channel_id=tep2.company)
       """.stripMargin
@@ -218,21 +217,19 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
 
     //将数据ETL到Ads层
     //ads_order_entity_total
-    spark.sql(s"alter table ads.ads_order_entity_total drop if exists partition(count_date=${yesStr})")
 
     val etlSql_1 =
       s"""
-        |insert into table ads_order_entity_total partition(count_date='${yesStr}')
+        |insert overwrite table ads_order_entity_total partition(count_date='${yesStr}')
         |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,
         |authorization_way,passive_obj,dws.geteducode(passive_obj,'zxxkc') as zxxkc,
         |if(dws.geteducode(passive_obj,'nj')='36','26',dws.geteducode(passive_obj,'nj')) as nj,count(distinct(user_id)) as user_count,
         |sum(quantity) as sale_count from dwd_order_temp_width group by product_id,company,passive_obj,authorization_way
       """.stripMargin
     spark.sql(etlSql_1)
-    spark.sql(s"alter table ads.ads_order_entity_ym drop if exists partition(count_date=${yesStr})")
     val etlSql_2 =
       s"""
-        |insert into table ads_order_entity_ym partition(count_date='${yesStr}')
+        |insert overwrite table ads_order_entity_ym partition(count_date='${yesStr}')
         |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,
         |substring(pay_time,1,6) as year_month,passive_obj,dws.geteducode(passive_obj,'zxxkc') as zxxkc,
         |if(dws.geteducode(passive_obj,'nj')='36','26',dws.geteducode(passive_obj,'nj')) as nj,
@@ -241,55 +238,49 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
         |,1,6),passive_obj
       """.stripMargin
     spark.sql(etlSql_2)
-    spark.sql(s"alter table ads.ads_order_user_zxxkc drop if exists partition(count_date=${yesStr})")
     val etlSql_3 =
       s"""
-         |insert into table ads_order_user_zxxkc partition(count_date='${yesStr}')
+         |insert overwrite table ads_order_user_zxxkc partition(count_date='${yesStr}')
          |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,
          |zxxkc,count(distinct(user_id)) from dwd_order_temp_width group by product_id,company,zxxkc
       """.stripMargin
     spark.sql(etlSql_3)
-    spark.sql(s"alter table ads.ads_order_user_nj drop if exists partition(count_date=${yesStr})")
     val etlSql_4 =
       s"""
-         |insert into table ads_order_user_nj partition(count_date='${yesStr}')
+         |insert overwrite table ads_order_user_nj partition(count_date='${yesStr}')
          |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,
          |if(dws.geteducode(passive_obj,'nj')='36','26',dws.geteducode(passive_obj,'nj')) as nj,
          |count(distinct(user_id)) from dwd_order_temp_width group by product_id,company,
          |if(dws.geteducode(passive_obj,'nj')='36','26',dws.geteducode(passive_obj,'nj'))
       """.stripMargin
     spark.sql(etlSql_4)
-    spark.sql(s"alter table ads.ads_order_user_total drop if exists partition(count_date=${yesStr})")
     val etlSql_5 =
       s"""
-         |insert into table ads_order_user_total partition(count_date='${yesStr}')
+         |insert overwrite table ads_order_user_total partition(count_date='${yesStr}')
          |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,
          |count(distinct(user_id)) from dwd_order_temp_width group by product_id,company
       """.stripMargin
     spark.sql(etlSql_5)
-    spark.sql(s"alter table ads.ads_order_user_ym drop if exists partition(count_date=${yesStr})")
     val etlSql_6 =
       s"""
-         |insert into table ads_order_user_ym partition(count_date='${yesStr}')
+         |insert overwrite table ads_order_user_ym partition(count_date='${yesStr}')
          |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,
          |substring(pay_time,1,6),count(distinct(user_id))
          |from dwd_order_temp_width group by product_id,company,substring(pay_time,1,6)
       """.stripMargin
     spark.sql(etlSql_6)
-    spark.sql(s"alter table ads.ads_order_user_area_total drop if exists partition(count_date=${yesStr})")
     val etlSql_7 =
       s"""
-         |insert into table ads_order_user_area_total partition(count_date='${yesStr}')
+         |insert overwrite table ads_order_user_area_total partition(count_date='${yesStr}')
          |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,country,
          |province,sum(quantity) as sale_count,
          |count(distinct(user_id)) as user_count from dwd_order_temp_width where nvl(country,'')!='' and nvl(province,'')!=''
          |group by product_id,company,country,province
       """.stripMargin
     spark.sql(etlSql_7)
-    spark.sql(s"alter table ads.ads_order_user_area_zxxkc_nj_total drop if exists partition(count_date=${yesStr})")
     val etlSql_77 =
       s"""
-         |insert into table ads_order_user_area_zxxkc_nj_total partition(count_date='${yesStr}')
+         |insert overwrite table ads_order_user_area_zxxkc_nj_total partition(count_date='${yesStr}')
          |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,
          |country,province,zxxkc,if(dws.geteducode(passive_obj,'nj')='36','26',dws.geteducode(passive_obj,'nj')) as nj,
          |sum(quantity) as sale_count,count(distinct(user_id)) as user_count
@@ -297,10 +288,9 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
          |group by product_id,company,country,province,zxxkc,if(dws.geteducode(passive_obj,'nj')='36','26',dws.geteducode(passive_obj,'nj'))
       """.stripMargin
     spark.sql(etlSql_77)
-    spark.sql(s"alter table ads.ads_order_user_area_ym drop if exists partition(count_date=${yesStr})")
     val etlSql_8 =
       s"""
-         |insert into table ads_order_user_area_ym partition(count_date='${yesStr}')
+         |insert overwrite table ads_order_user_area_ym partition(count_date='${yesStr}')
          |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,
          |substring(pay_time,1,6),
          |country,province,sum(quantity) as sale_count,count(distinct(user_id)) as user_count
@@ -308,10 +298,9 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
          |group by product_id,company,country,province,substring(pay_time,1,6)
       """.stripMargin
     spark.sql(etlSql_8)
-    spark.sql(s"alter table ads.ads_order_user_area_zxxkc_nj_ym drop if exists partition(count_date=${yesStr})")
     val etlSql_88 =
       s"""
-         |insert into table ads_order_user_area_zxxkc_nj_ym partition(count_date='${yesStr}')
+         |insert overwrite table ads_order_user_area_zxxkc_nj_ym partition(count_date='${yesStr}')
          |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,
          |zxxkc,if(dws.geteducode(passive_obj,'nj')='36','26',dws.geteducode(passive_obj,'nj')) as nj,substring(pay_time,1,6),
          |country,province,sum(quantity) as sale_count,count(distinct(user_id)) as user_count

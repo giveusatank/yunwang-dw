@@ -85,27 +85,47 @@ object OdsJxwCtreeRel2DwdOrderWidth {
         |remark string,
         |row_timestamp string,
         |row_status string,
-        |authorization_way string
-        |) partitioned by (count_date string)
+        |authorization_way string,
+        |count_date string )
         |stored as parquet
       """.stripMargin
     spark.sql(createSql)
+
     spark.sql("use ods")
+
+    val createSql1 =
+      """
+        |CREATE EXTERNAL TABLE  if not exists  ods.ods_jxw_platform_user_ctree_rel(`id` string, `user_id` string, `user_name` string, `user_seting` string, `org_id` string, `org_name` string, `edu_code` string, `rkxd` string, `zxxkc` string, `publisher` string, `nj` string, `fascicule` string, `year` string, `keywords` string, `ctree_id` string, `ctree_name` string, `sub_heading` string, `s_state` string, `score` string, `s_version` string, `range_type` string, `ctree_related_object` string,
+        | `view_numb`
+        |string, `down_numb` string, `s_creator` string, `s_creator_name` string, `s_create_time` string, `valid_time` string, `authorization_code` string, `authorization_type` string, `authorization_way` string, `end_time` string, `reg_time` string, `row_timestamp` string, `row_status` string)
+        |PARTITIONED BY (`count_date` string)
+        |ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+        |WITH SERDEPROPERTIES (
+        |  'serialization.format' = '1'
+        |)
+        |STORED AS
+        |  INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
+        |OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+        |LOCATION 'hdfs://ns/pep_cloud/business/ods/ods_jxw_platform_user_ctree_rel'
+      """.stripMargin
+    spark.sql(createSql1)
+
+
 
     spark.sql("msck repair table ods_jxw_platform_user_ctree_rel")
 
     val insertSql =
       s"""
-        |insert into table dwd.dwd_order_related_width partition (count_date=${yesStr})
+        |insert into table dwd.dwd_order_related_width
         |select id,NULL,'11120101',NULL,ctree_id,ctree_name,'1',NULL,
         |NULL,user_id,'110000006',NULL,s_state,s_create_time,NULL,NULL,
         |end_time,from_unixtime(unix_timestamp(split(s_create_time,' ')[0],'yyyy-MM-dd'),'yyyyMMdd'),NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
-        |NULL,NULL,NULL,NULL,row_timestamp,row_status,authorization_way
+        |NULL,NULL,NULL,NULL,row_timestamp,row_status,authorization_way,'${yesStr}'
         |from
         |(select * from (
         |select *, row_number() over (partition by id order by row_timestamp desc ) num from ods.ods_jxw_platform_user_ctree_rel
         |) where num=1 and row_status='1')
-        | where s_state='110' and count_date<=${yesStr}
+        | where s_state='110' and count_date<='${yesStr}'
       """.stripMargin
 
     spark.sql(insertSql)

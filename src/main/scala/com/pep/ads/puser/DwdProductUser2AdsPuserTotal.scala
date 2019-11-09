@@ -3,6 +3,7 @@ package com.pep.ads.puser
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Date}
 
+import com.pep.common.DbProperties
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 
@@ -54,16 +55,15 @@ object DwdProductUser2AdsPuserTotal {
         |company string,
         |country string,
         |province string,
-        |user_count string,
-        |count_date string
-        |) stored as parquet
+        |user_count string
+        |) partitioned by (count_date string) stored as parquet
       """.stripMargin
 
     spark.sql(createSql)
 
     val etlSql =
       s"""
-        |insert into table ads_puser_total
+        |insert overwrite table ads_puser_total
         |select ress.pid,ress.com,ress.country,ress.province,count(distinct(ress.user_id)),'${yesStr}' from
         |(select ress.pid,ress.com,ress.user_id,ress.country,ress.province,ress.city from
         |(select temp.user_id,temp.pid,temp.com,temp.country,temp.province,temp.city,
@@ -82,10 +82,7 @@ object DwdProductUser2AdsPuserTotal {
 
   def writeAdsPUserTotal2PostgreSql(spark: SparkSession, yesStr: String) = {
 
-    val props = new java.util.Properties()
-    props.setProperty("user","pgadmin")
-    props.setProperty("password","szkf2019")
-    props.setProperty("url","jdbc:postgresql://172.30.0.9:5432/bi")
+    val props = DbProperties.propScp
     props.setProperty("tableName","ads_puser_total")
     props.setProperty("write_mode","Append")
 
@@ -94,6 +91,7 @@ object DwdProductUser2AdsPuserTotal {
     val selectSql =
       s"""
          |select product_id,company,country,province,user_count,count_date from ads_puser_total
+         |where count_date='${yesStr}'
       """.stripMargin
 
     val df_1: Dataset[Row] = spark.sql(selectSql).coalesce(2)

@@ -10,6 +10,7 @@ command=sh /usr/local/spark-2.2.3-bin-hadoop2.6/bin/spark-submit \
  --queue dwq \
  --conf spark.yarn.maxAppAttempts=0 \
  --files /usr/local/spark-2.2.3-bin-hadoop2.6/conf/hive-site.xml \
+ --jars hdfs://ns/pep_cloud/ulog/auxlib/hive-plugin-1.0-SNAPSHOT.jar \
  --class com.pep.ads.textbook.DwsTextBookUsed2AdsTextBookTotal \
  /usr/local/spark-2.2.3-bin-hadoop2.6/pep-job/yunwang-dw-1.0-SNAPSHOT.jar
 dependencies=run-DwdActionDoLog2DwsTextBookTotal

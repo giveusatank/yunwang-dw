@@ -30,13 +30,12 @@ object DwdOrderDetailWidth2DwsOrderDetailTotal {
       """.stripMargin
 
     spark.sql(createSql)
-    spark.sql(s"alter table dws.dws_order_detail_total drop if exists partition(count_date=${yesToday})")
     /**
       * 注： 此时dwd层的ods_order_detail_width 还没有 这张表要经过数据的统一化
       */
     val insertSql =
       s"""
-         |insert into table dws_order_detail_total partition (count_date)
+         |insert overwrite table dws_order_detail_total partition (count_date)
          |select t1.app_id,
          |       t1.sale_channel_id,
          |       count( distinct(t1.user_id))                 as user_count,

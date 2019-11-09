@@ -11,6 +11,7 @@ command=sh /usr/local/spark-2.2.3-bin-hadoop2.6/bin/spark-submit \
  --conf spark.yarn.maxAppAttempts=0 \
  --files /usr/local/spark-2.2.3-bin-hadoop2.6/conf/hive-site.xml \
  --class com.pep.dwd.DwsUvTotal2DwdUserArea \
+ --jars hdfs://ns/pep_cloud/ulog/auxlib/hive-plugin-1.0-SNAPSHOT.jar \
  /usr/local/spark-2.2.3-bin-hadoop2.6/pep-job/yunwang-dw-1.0-SNAPSHOT.jar
 dependencies=run-DwdActionDoLog2DwsUv
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
