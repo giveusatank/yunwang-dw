@@ -213,8 +213,6 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
 
     spark.sql(createTempView)
 
-    spark.sql("select * from dwd_order_temp_width").show()
-
     //将数据ETL到Ads层
     //ads_order_entity_total
 

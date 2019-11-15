@@ -20,7 +20,7 @@ object OdsActionLog2DwdActionDoLog {
     //获取当前时间的前一天
     val format = new SimpleDateFormat("yyyyMMdd")
     var startDate = new Date()
-    var reserveDateNum = 3
+    var reserveDateNum = 1
     val reg = "^[0-9]{1,2}$".r
     if (None != reg.findPrefixOf(args(0))) {
       reserveDateNum = Integer.valueOf(args(0))
@@ -130,7 +130,7 @@ object OdsActionLog2DwdActionDoLog {
          |            where put_date = '$yesterdayStr'
          |              and start_time is not null
          |              and not (product_id = '1213' and action_title = 'sys_100001')
-         |              and from_unixtime(cast(substring(start_time, 1, 10) as bigint), 'yyyyMMdd') in ($reserveDateStr) distribute by substring(start_time, 8, 10))
+         |              and from_unixtime(cast(substring(start_time, 1, 10) as bigint), 'yyyyMMdd') in ($yesterdayStr) distribute by substring(start_time, 8, 10))
          |               as tmp)
          |         as t
          |where t.num = 1

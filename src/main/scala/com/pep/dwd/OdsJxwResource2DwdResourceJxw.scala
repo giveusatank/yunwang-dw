@@ -137,7 +137,6 @@ object OdsJxwResource2DwdResourceJxw {
     spark.sql("msck repair table ods.ods_jxw_platform_p_resource")
     spark.sql("msck repair table ods.ods_jxw_platform_p_textbook")
     spark.sql("truncate table dwd.dwd_resource_jxw")
-    spark.sql("msck repair table dwd.dwd_resource_jxw")
     val selectSql =
       """
         |select a.*,b.s_state as tb_state,b.zxxkc,b.nj from (
@@ -148,15 +147,11 @@ object OdsJxwResource2DwdResourceJxw {
       """.stripMargin
     val readRddDF:DataFrame = spark.sql(selectSql)
 
-    var write_path = s"hdfs://ns//hive/warehouse/dwd.db/dwd_resource_jxw/count_date=${yesStr}"
+    var write_path = s"hdfs://ns//hive/warehouse/dwd.db/dwd_resource_jxw/"
 
-    val delPartitionYesStr = s"alter table dwd.dwd_resource_jxw drop if exists partition(count_date=${yesStr})"
-    spark.sql(delPartitionYesStr)
     val writeDF = readRddDF.repartition(20)
-    writeDF.write.json(write_path)
-    val delPartition = s"alter table dwd.dwd_resource_jxw drop if exists partition(count_date=${_2DaysBefore})"
-    spark.sql(delPartition)
-    spark.sql("msck repair table dwd.dwd_resource_jxw")
+    writeDF.write.mode("overwrite").json(write_path)
+
   }
 
 }

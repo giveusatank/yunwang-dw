@@ -69,6 +69,8 @@ object DwsUvTotal2DwdUserArea {
         |location,active_user,count_date from dws.dws_uv_total where nvl(active_user,'')!=''
       """.stripMargin
 
+    println(etlSql)
+
     spark.sql(etlSql)
 
   }

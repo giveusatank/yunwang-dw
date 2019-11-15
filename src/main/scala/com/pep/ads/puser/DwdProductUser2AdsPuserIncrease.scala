@@ -53,28 +53,41 @@ object DwdProductUser2AdsPuserIncrease {
          |company string,
          |country string,
          |province string,
+         |group_id string,
+         |week string,
+         |month string,
          |user_count string
          |) partitioned by (count_date string) stored as parquet
       """.stripMargin
 
     spark.sql(createSql)
 
-    spark.sql(s"alter table ads.ads_puser_increase drop if exists partition(count_date=${yesStr})")
-
     val etlSql =
       s"""
-         |insert overwrite table ads_puser_increase
-         |select ress.pid,ress.com,ress.country,ress.province,count(distinct(ress.user_id)),'${yesStr}' from
-         |(select ress.pid,ress.com,ress.user_id,ress.country,ress.province,ress.city from
-         |(select temp.user_id,temp.pid,temp.com,temp.country,temp.province,temp.city,
+         |insert overwrite table ads_puser_increase partition(count_date='${yesStr}')
+         |select temp2.product_id,temp2.company,temp2.country,temp2.province,grouping_id() as gid,
+         |max(temp2.week) as week,max(temp2.month) as month,sum(temp2.user_count) as user_count from
+         |(select ress.pid as product_id,ress.com as company,ress.country as country,ress.province as province,
+         |count(distinct(ress.user_id)) as user_count,
+         |dws.dateUtilUDF('week',unix_timestamp(ress.rtt, 'yyyyMMdd')) as week,
+         |concat(substring(ress.rtt,1,4),"-",substring(ress.rtt,5,2)) as month from
+         |(select ress.pid,ress.com,ress.rtt,ress.user_id,ress.country,ress.province,ress.city from
+         |(select temp.user_id,temp.pid,temp.com,temp.rtt,temp.country,temp.province,temp.city,
          |row_number() over(partition by temp.user_id,temp.pid,temp.com order by temp.cou desc) as rkk from
-         |(select t1.user_id,t1.product_id as pid,t1.company as com,t2.country,t2.province,t2.city,
-         |count(1) over(partition by t1.product_id,t1.company,t1.user_id,t2.country,t2.province,
+         |(select t1.user_id,t1.product_id as pid,t1.company as com,from_unixtime(cast(t1.row_timestamp as bigint) / 1000,'yyyyMMdd') as rtt,
+         |t2.country,t2.province,t2.city,count(1) over(partition by t1.product_id,t1.company,t1.user_id,t2.country,t2.province,
          |t2.city) as cou from
-         |(select * from dwd.dwd_product_user where from_unixtime(cast(row_timestamp as bigint) / 1000,'yyyyMMdd')='${yesStr}')
+         |(select * from dwd.dwd_product_user where from_unixtime(cast(first_access_time as bigint) / 1000,'yyyyMMdd')='${yesStr}')
          |as t1 left join dwd.dwd_user_area as t2 on
          |t1.product_id=t2.product_id and t1.company=t2.company and t1.user_id=t2.active_user) as temp )
-         |as ress) group by ress.pid,ress.com,ress.country,ress.province
+         |as ress) group by ress.pid,ress.com,ress.country,ress.province,ress.rtt) as temp2 group by
+         |temp2.product_id,temp2.company,temp2.country,temp2.province,temp2.week,temp2.month
+         |grouping sets(
+         |(temp2.product_id),
+         |(temp2.product_id,temp2.company),
+         |(temp2.product_id,temp2.company,temp2.country,temp2.province),
+         |(temp2.product_id,temp2.country,temp2.province)
+         |) order by gid
       """.stripMargin
 
     spark.sql(etlSql)
@@ -237,8 +250,8 @@ object DwdProductUser2AdsPuserIncrease {
 
     val selectSql =
       s"""
-        |select product_id,company,country,province,user_count,count_date from ads_puser_increase
-        |where count_date='${yesStr}'
+        |select product_id,company,country,province,group_id,week,month,
+        |user_count,count_date from ads_puser_increase where count_date='${yesStr}'
       """.stripMargin
 
 

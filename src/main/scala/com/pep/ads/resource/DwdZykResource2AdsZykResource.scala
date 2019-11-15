@@ -37,8 +37,6 @@ object DwdZykResource2AdsZykResource {
         |stored as textfile
       """.stripMargin
     spark.sql(createSql)
-    spark.sql("msck repair table dwd.dwd_resource_jxw")
-    spark.sql("msck repair table dwd.dwd_resource_zyk")
     spark.sql("msck repair table ads.ads_resource_jxw")
 
     val insertSql =
@@ -88,7 +86,7 @@ object DwdZykResource2AdsZykResource {
   }
 
   def main(args: Array[String]): Unit = {
-    val conf = new SparkConf().setAppName("DwdZykResource2AdsZykResource").set("spark.sql.shuffle.partitions", Constants.ads_shuffle_partitions)
+    val conf = new SparkConf().setAppName("run-DwdZykResource2AdsZykResource").set("spark.sql.shuffle.partitions", Constants.ads_shuffle_partitions)
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     //获取今日、昨天的日期
     val format = new SimpleDateFormat("yyyyMMdd")

@@ -81,7 +81,7 @@ object OdsProductUser2DwdProductUser {
       s"""
         |insert overwrite table dwd.dwd_product_user
         |select if(instr(user_id,'_')!=0,split(user_id,'_')[1],user_id),
-        |if(company='pep_click','121301',product_id) as product_id,company,reg_name,nick_name,real_name,phone,email,sex,
+        |if(company='pep_click','1214',product_id) as product_id,company,reg_name,nick_name,real_name,phone,email,sex,
         |birthday,address,org_id,user_type,first_access_time,last_access_time,last_access_ip,
         |country,province,city,location,row_timestamp,row_status
         |from

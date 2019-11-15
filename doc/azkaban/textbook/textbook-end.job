@@ -1,5 +1,5 @@
 #textbook-end.job
 type=command
 command=echo "textbook-end"
-dependencies=run-DwsTextbook2AdsTextbook
+dependencies=run-DwsTextbook2AdsTextbook,run-DwsTextBookUsed2AdsTextBookAvgTime
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

@@ -37,7 +37,6 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
         |    stored as textfile
       """.stripMargin
     spark.sql(createSql)
-    spark.sql("msck repair table dwd.dwd_order_related_width")
 
     var ysList : List[String] = getCurrentSchoolYear(yestStr)
 
@@ -111,7 +110,6 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
         |    stored as textfile
       """.stripMargin
     spark.sql(createSql2)
-    spark.sql("msck repair table dwd.dwd_order_related_width")
 
 
     //select split(chapter_ids,'\,')[size(split(chapter_ids,'\,'))-1] as chapter_id,rid from (select explode(split(tid1_path,'\\|')) as chapter_ids,rid  from ods.ods_zyk_pep_cn_resource where tid1_path like  '%|%' limit 1);

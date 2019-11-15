@@ -1,16 +1,16 @@
-#run-OdsActionLogOt2DwdActionDoLog.job
+#run-OdsJxwTextbook2DwdTextbookJxw.job
 type=command
 command=sh /usr/local/spark-2.2.3-bin-hadoop2.6/bin/spark-submit \
  --master yarn \
  --deploy-mode cluster \
- --num-executors 18 \
+ --num-executors 15 \
  --executor-memory 3G \
  --driver-memory 1G \
  --executor-cores 2 \
- --conf spark.yarn.maxAppAttempts=0 \
  --queue dwq \
- --jars hdfs://ns/pep_cloud/ulog/auxlib/hive-plugin-1.0-SNAPSHOT.jar \
+ --conf spark.yarn.maxAppAttempts=0 \
  --files /usr/local/spark-2.2.3-bin-hadoop2.6/conf/hive-site.xml \
- --class com.pep.dwd.OdsActionLogOt2DwdActionDoLog \
- /usr/local/spark-2.2.3-bin-hadoop2.6/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 1
+ --jars hdfs://ns/pep_cloud/ulog/auxlib/hive-plugin-1.0-SNAPSHOT.jar \
+ --class com.pep.dwd.OdsJxwTextbook2DwdTextbookJxw \
+ /usr/local/spark-2.2.3-bin-hadoop2.6/pep-job/yunwang-dw-1.0-SNAPSHOT.jar
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

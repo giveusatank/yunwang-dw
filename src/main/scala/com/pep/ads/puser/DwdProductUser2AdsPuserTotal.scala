@@ -55,7 +55,8 @@ object DwdProductUser2AdsPuserTotal {
         |company string,
         |country string,
         |province string,
-        |user_count string
+        |user_count string,
+        |gid       string
         |) partitioned by (count_date string) stored as parquet
       """.stripMargin
 
@@ -64,7 +65,9 @@ object DwdProductUser2AdsPuserTotal {
     val etlSql =
       s"""
         |insert overwrite table ads_puser_total
-        |select ress.pid,ress.com,ress.country,ress.province,count(distinct(ress.user_id)),'${yesStr}' from
+        |select ress.pid,ress.com,ress.country,ress.province,count(distinct(ress.user_id)),
+        |grouping_id(),'${yesStr}' as gid
+        | from
         |(select ress.pid,ress.com,ress.user_id,ress.country,ress.province,ress.city from
         |(select temp.user_id,temp.pid,temp.com,temp.country,temp.province,temp.city,
         |row_number() over(partition by temp.user_id,temp.pid,temp.com order by temp.cou desc) as rkk from
@@ -72,8 +75,12 @@ object DwdProductUser2AdsPuserTotal {
         |count(1) over(partition by t1.product_id,t1.company,t1.user_id,t2.country,t2.province,
         |t2.city) as cou from
         |dwd.dwd_product_user as t1 left join dwd.dwd_user_area as t2 on
-        |t1.product_id=t2.product_id and t1.company=t2.company and t1.user_id=t2.active_user) as temp )
+        |t1.product_id=t2.product_id and t1.company=t2.company and t1.user_id=t2.active_user and t2.country='中国') as temp )
         |as ress) group by ress.pid,ress.com,ress.country,ress.province
+        |grouping sets (
+        |(ress.pid,ress.com,ress.country,ress.province),
+        |(ress.pid,ress.com)
+        |)
       """.stripMargin
 
     spark.sql(etlSql)
@@ -90,7 +97,7 @@ object DwdProductUser2AdsPuserTotal {
 
     val selectSql =
       s"""
-         |select product_id,company,country,province,user_count,count_date from ads_puser_total
+         |select * from ads_puser_total
          |where count_date='${yesStr}'
       """.stripMargin
 

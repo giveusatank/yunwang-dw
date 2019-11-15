@@ -131,11 +131,12 @@ object OdsOrder2DwdOrderWidth {
 
     spark.sql("msck repair table ods_order_info")
     spark.sql("msck repair table ods_order_detail")
+    spark.sql("truncate table dwd.dwd_order_related_width")
 
     val insertSql =
       s"""
          |insert into dwd.dwd_order_related_width
-         |select tt.infoId,tt.detailId,if(tt.company='pep_click','121301',tt.appId),tt.appOrderId,dws.yunwangdateformat("tbid",trim(tt.productId)),tt.productName,
+         |select tt.infoId,tt.detailId,if(tt.company='pep_click','1214',tt.appId),tt.appOrderId,dws.yunwangdateformat("tbid",trim(tt.productId)),tt.productName,
          |tt.quantity,tt.type,tt.code,tt.userId,tt.company,tt.companyName,tt.state,tt.create_time,
          |tt.del_time,tt.start_time,tt.end_time,tt.pay_time,tt.discount,tt.beans,tt.materielCode,
          |tt.materielName,tt.payChannel,tt.payPrice,tt.orderPrice,tt.price,tt.payTradeno,tt.coupons,

@@ -2,4 +2,4 @@
 2. 数仓所有表的建表语句放在任务中。
 3. 安分区执行的任务在执行插入使用insert overwrite
 4. ods层分区字段用put_date,其他层使用count_date;ads层必须使用分区表。
-5. 表名命名ads_uv_total  数仓层_业务类型_维度
+5. 表名命名ads_uv_total  数仓层_底层模型缩写（uv,textbook，resource,puser,order）_维度

@@ -91,14 +91,13 @@ object OdsJxwTextbook2DwdTextbookJxw {
         |row_status           string,
         |put_date             string,
         |num                  string
-        |) partitioned by (count_date string)
+        |)
         |ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
       """.stripMargin
 
     spark.sql(createSql)
     spark.sql("msck repair table ods.ods_jxw_platform_p_textbook")
     spark.sql("truncate table dwd.dwd_textbook_jxw")
-    spark.sql("msck repair table dwd.dwd_textbook_jxw")
 
     val selectSql =
       """
@@ -108,16 +107,11 @@ object OdsJxwTextbook2DwdTextbookJxw {
       """.stripMargin
     val readRddDF:DataFrame = spark.sql(selectSql)
 
-    var write_path = s"hdfs://ns//hive/warehouse/dwd.db/dwd_textbook_jxw/count_date=${yesStr}"
+    var write_path = s"hdfs://ns//hive/warehouse/dwd.db/dwd_textbook_jxw/"
 
-    val delPartitionYesStr = s"alter table dwd.dwd_textbook_jxw drop if exists partition(count_date=${yesStr})"
-    spark.sql(delPartitionYesStr)
     val writeDF = readRddDF.repartition(20)
-    writeDF.write.json(write_path)
+    writeDF.write.mode("overwrite").json(write_path)
 
-    val delPartition = s"alter table dwd.dwd_textbook_jxw drop if exists partition(count_date=${_2DaysBefore})"
-    spark.sql(delPartition)
-    spark.sql("msck repair table dwd.dwd_textbook_jxw")
   }
 
 }

@@ -132,8 +132,7 @@ object OdsZykResource2DwdZykResource {
         |file_extension        string,
         |pid                   string,
         |chapter_id            string,
-        |tb_id                 string
-        |) partitioned by (count_date string)
+        |tb_id                 string)
         |ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
       """.stripMargin
 
@@ -143,7 +142,6 @@ object OdsZykResource2DwdZykResource {
     spark.sql("msck repair table ods.ods_zyk_pep_cn_file")
     spark.sql("msck repair table ods.ods_zyk_pep_cn_tree")
     spark.sql("truncate table dwd.dwd_resource_zyk")
-    spark.sql("msck repair table dwd.dwd_resource_zyk")
     //sql :
     val readSql =
       """
@@ -165,16 +163,10 @@ object OdsZykResource2DwdZykResource {
       """.stripMargin
 
     val readRddDF:DataFrame = spark.sql(readSql)
-
-    var write_path = s"hdfs://ns/hive/warehouse/dwd.db/dwd_resource_zyk/count_date=${yesStr}"
-
-    val delPartitionYesStr = s"alter table dwd.dwd_resource_zyk drop if exists partition(count_date=${yesStr})"
-    spark.sql(delPartitionYesStr)
+    var write_path = s"hdfs://ns/hive/warehouse/dwd.db/dwd_resource_zyk"
     val writeDF= readRddDF.coalesce(20)
-    writeDF.write.json(write_path)
-    val delPartition = s"alter table dwd.dwd_resource_zyk drop if exists partition(count_date=${_2DaysBefore})"
-    spark.sql(delPartition)
-    spark.sql("msck repair table dwd.dwd_resource_zyk")
+    writeDF.write.mode("overwrite").json(write_path)
+
   }
 
 }
