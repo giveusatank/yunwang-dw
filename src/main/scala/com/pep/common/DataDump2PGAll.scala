@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 
 object DataDump2PGAll {
   //4 将Ads层UV相关数据写入PostgreSQL
-  def writeAdsData2PostgreSQL(spark: SparkSession, tableName: String, yesStr: String): Unit = {
+  def writeAdsData2PostgreSQL(spark: SparkSession, tableName: String): Unit = {
     val props = DbProperties.propScp
     props.setProperty("write_mode", "Append")
     spark.sql("use ads")
@@ -58,15 +58,13 @@ object DataDump2PGAll {
       "ads_active_reg_user"
     )
 
-    tableList.foreach(f=>{
-      val querySql_1 =
-        s"""
-           |select * from ${tableName} order by count_date desc
+    val querySql_1 =
+      s"""
+         |select * from ${tableName} order by count_date desc
       """.stripMargin
 
-      spark.sql(querySql_1).coalesce(5).write.mode(props.getProperty("write_mode")).
-        jdbc(props.getProperty("url"), tableName, props)
-    })
+    spark.sql(querySql_1).coalesce(5).write.mode(props.getProperty("write_mode")).
+      jdbc(props.getProperty("url"), tableName, props)
 
 
   }
@@ -74,12 +72,13 @@ object DataDump2PGAll {
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setAppName("DataDump2PG").set("spark.sql.shuffle.partitions", Constants.ads_shuffle_partitions)
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
-
-    action(spark, args(0), args(1))
+    args.foreach(s =>{
+      action(spark, s)
+    })
     spark.stop()
   }
 
-  def action(spark: SparkSession, tableName: String, yestStr: String): Unit = {
-    writeAdsData2PostgreSQL(spark,tableName,yestStr)
+  def action(spark: SparkSession, tableName: String): Unit = {
+    writeAdsData2PostgreSQL(spark,tableName)
   }
 }

@@ -166,7 +166,7 @@ object DwdActionDoLog2DwsTextBookTotal {
 
     val sql1 =
       s"""
-         |insert into dws_textbook_used_total
+         |insert overwrite table dws_textbook_used_total
          |select product_id,
          |       company,
          |       country,
@@ -182,11 +182,10 @@ object DwdActionDoLog2DwsTextBookTotal {
          |       sum(action_count) as pv,
          |       ${yesStr}
          |from dws_textbook_used_session
-         |where count_date = '${yesStr}'
          |group by start_action, count_date, product_id, company, country, province, city, location, passive_obj, user_id
          """.stripMargin
     spark.sql(sql1)
-
+  /*
     val sql55 =
       s"""
          |drop table if exists dws_textbook_used_${yesStr}
@@ -251,7 +250,7 @@ object DwdActionDoLog2DwsTextBookTotal {
     s"""
        |drop table if exists dws_textbook_used_${_7DaysBefore}
       """.stripMargin
-    spark.sql(sql5)
+    spark.sql(sql5)*/
   }
 
   //方法4：将DwsTextBookUsedTotal按照学科相关维度展开形成宽表

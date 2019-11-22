@@ -43,12 +43,10 @@ object OdsProductUser2DwdProductUser {
   }
 
   def writeOdsProductUser2DwdProductUser(spark: SparkSession, yesStr: String) = {
-
     spark.sql("use dwd")
-
     val createSql =
       s"""
-        |CREATE TABLE if not exists dwd_product_user(
+        |CREATE TABLE if not exists dwd.dwd_product_user(
         |user_id string,
         |product_id string,
         |company string,
@@ -80,13 +78,15 @@ object OdsProductUser2DwdProductUser {
     val etlSql =
       s"""
         |insert overwrite table dwd.dwd_product_user
-        |select if(instr(user_id,'_')!=0,split(user_id,'_')[1],user_id),
-        |if(company='pep_click','1214',product_id) as product_id,company,reg_name,nick_name,real_name,phone,email,sex,
+        |select user_id_ex,
+        |product_id_ex,
+        |company,reg_name,nick_name,real_name,phone,email,sex,
         |birthday,address,org_id,user_type,first_access_time,last_access_time,last_access_ip,
         |country,province,city,location,row_timestamp,row_status
         |from
-        |(select *,row_number() over(partition by product_id,company,user_id order by row_timestamp desc) as rank
-        |from ods.ods_product_user) as t1 where t1.rank=1 and t1.row_status='1'
+        |(select user_id_ex,product_id_ex,*,row_number() over(partition by product_id_ex,company,user_id_ex order by row_timestamp desc) as rank
+        |from (select if(instr(user_id,'_')!=0,split(user_id,'_')[1],user_id) as user_id_ex,if(company='pep_click','1214',product_id) as product_id_ex,* from ods.ods_product_user) t0
+        |) as t1 where t1.rank=1 and t1.row_status='1'
       """.stripMargin
 
     spark.sql(etlSql)

@@ -107,12 +107,14 @@ object DwdProductUser2AdsPuserIncrease {
         |product_id string,
         |company string,
         |province string,
-        |query_type string,
         |bus_reg string,
         |new_reg string,
         |tou_reg string,
+        |new_device_cu string,
+        |tou_device_cu string,
         |new_reg_ratio string,
         |tou_active_reg_ratio string,
+        |gid string,
         |week string
         |)
         |partitioned by (count_date string)
@@ -122,120 +124,76 @@ object DwdProductUser2AdsPuserIncrease {
     spark.sql(createSql)
     val insertSql =
       s"""
-         |insert into table ads.ads_puser_conversion partition(count_date)
-         |select t.product_id,t.company,'全国','0',c.cu as bus_reg,t.new_reg ,(c.cu-t.new_reg) as tou_reg,round(new_reg/c.cu,2) as new_reg_ratio,round((c.cu-t.new_reg)/d.tou_cu,2) as tou_active_reg_ratio,dws.dateUtilUDF('week',unix_timestamp('$yestStr', 'yyyyMMdd')),'$yestStr' from (
-         |select b.product_id,count(DISTINCT (b.user_id)) as new_reg,b.company from (-- 新用户注册数
-         |select aa.product_id,aa.company,aa.active_user from dws.dws_uv_total aa join ( -- 采集注册用户中设备当日首次出现为新用户ID
-         |select device_id,product_id,company from dws.dws_uv_increase where nvl(active_user,'')!='' and count_date='$yestStr' group by device_id,product_id,company -- 新用户表中的注册用户（新注册、游客注册）的设备ID
-         |) bb on aa.device_id=bb.device_id and from_unixtime(cast(substring(aa.first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' and nvl(aa.active_user,'')!='' -- 筛选出当天出现的设备
-         |) a join (
-         |select user_id as user_id,product_id,company from dwd.dwd_product_user where -- 当天注册用户
-         |from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' group by user_id,product_id,company
-         |) b on a.active_user=b.user_id and a.product_id=b.product_id  and a.company=b.company
-         |group by b.product_id,b.company) t join (
-         |select count(distinct(user_id)) as cu,product_id,company from dwd.dwd_product_user where
-         |from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr'  group by product_id,company
-         |) c on t.product_id=c.product_id and t.company=c.company
-         |join (
-         |select t.product_id,t.company,count(distinct(t.device_id)) as tou_cu from (
-         |select a.product_id,a.company,a.device_id,nvl(b.device_id,'0000') as nvlid from (
-         |select device_id,company,product_id from dws.dws_uv_daily where count_date='$yestStr' group by device_id,company,product_id having nvl(max(active_user),'')='' --游客+今日新用户
-         |) a left join (
-         |select device_id,company,product_id from dws.dws_uv_increase where count_date='$yestStr' group by device_id,company,product_id having nvl(max(active_user),'')='' --今日新用户
-         |) b on a.company=b.company and a.device_id=b.device_id and a.product_id=b.product_id
-         |) t where t.nvlid='0000' group by t.product_id,t.company
-         |) d on  t.product_id=d.product_id and t.company=d.company
+         |insert overwrite table ads.ads_puser_conversion partition(count_date)
+         |select
+         |    tt.product_id,
+         |    tt.company,
+         |    tt.province,
+         |    sum(tt.bus_reg),
+         |    sum(tt.new_reg),
+         |    sum(tt.bus_reg)-sum(tt.new_reg),
+         |    sum(tt.new_device_cu),
+         |    sum(tt.tou_device_cu),
+         |    round(sum(tt.new_reg)/sum(tt.new_device_cu),4) as new_reg_ratio,
+         |    round((sum(tt.bus_reg)-sum(tt.new_reg))/sum(tt.tou_device_cu),4) as tou_active_reg_ratio,
+         |    grouping_id() as gid,
+         |    dws.dateUtilUDF('week',unix_timestamp('$yestStr', 'yyyyMMdd')) as week ,
+         |    '$yestStr'
+         |from (
+         |    select
+         |    t.product_id,
+         |    t.company,
+         |    t.province,
+         |    t.cu as bus_reg,
+         |    c.new_reg as new_reg,
+         |    e.new_device_cu as new_device_cu,
+         |    d.tou_device_cu as tou_device_cu
+         |  from (
+         |    select count(user_id) as cu,product_id,company,province from (
+         |    select u1.user_id,u1.product_id,u1.company,u2.province from dwd.dwd_product_user u1
+         |    left join dwd.dwd_user_area u2 on u1.product_id=u2.product_id and u1.company=u2.company and u1.user_id=u2.active_user where -- 当天注册用户
+         |    from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr'
+         |    group by u1.user_id,u1.product_id,u1.company,u2.province,u1.user_id) group by product_id,company,province
+         |  ) t left join (
+         |    select b.product_id,count(DISTINCT (b.user_id)) as new_reg,b.company,a.province from (-- 新用户注册数
+         |    select aa.product_id,aa.company,aa.active_user,aa.province from dws.dws_uv_total aa join ( -- 采集注册用户中设备当日首次出现为新用户ID
+         |    select device_id,product_id,company  from dws.dws_uv_increase where nvl(active_user,'')!='' and count_date='$yestStr' group by device_id,product_id,company -- 新用户表中的注册用户（新注册、游客注册）的设备ID
+         |    ) bb on aa.device_id=bb.device_id and from_unixtime(cast(substring(aa.first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' and nvl(aa.active_user,'')!='' and aa.country='中国'-- 筛选出当天出现的设备
+         |    ) a left join (
+         |    select u1.user_id as user_id,u1.product_id,u1.company,u2.province from dwd.dwd_product_user u1 left join dwd.dwd_user_area u2 on u1.product_id=u2.product_id and u1.company=u2.company and u1.user_id=u2.active_user where -- 当天注册用户
+         |    from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' group by u1.user_id,u1.product_id,u1.company,u2.province
+         |    ) b on a.active_user=b.user_id and a.product_id=b.product_id  and a.company=b.company and a.province=b.province
+         |    group by b.product_id,b.company,a.province
+         |  ) c on t.product_id=c.product_id and t.company=c.company and t.province=c.province
+         |  left join ( -- 老游客
+         |    select t.product_id,t.company,t.province,count(distinct(t.device_id)) as tou_device_cu from (
+         |    select a.product_id,a.company,a.province,a.device_id,nvl(b.device_id,'0000') as nvlid from (
+         |    select device_id,company,product_id,province from dws.dws_uv_daily where count_date='$yestStr' group by device_id,company,product_id,province having nvl(max(active_user),'')='' --游客+今日新用户
+         |    ) a left join (
+         |    select device_id,company,product_id,province from dws.dws_uv_increase where count_date='$yestStr' group by device_id,company,product_id,province having nvl(max(active_user),'')='' --今日新用户
+         |    ) b on a.company=b.company and a.device_id=b.device_id and a.product_id=b.product_id and a.province=b.province
+         |    ) t where t.nvlid='0000' group by t.product_id,t.company,t.province
+         |  ) d on  t.product_id=d.product_id and t.company=d.company and t.province=d.province
+         |  left join ( -- 新游客
+         |    select t.product_id,t.company,count(distinct(device_id)) as new_device_cu,t.province from (
+         |    select a.product_id,a.company,a.device_id,nvl(b.device_id,'0000') as nvlid,a.province from (
+         |    select device_id,company,product_id,product_id,province from dws.dws_uv_daily where count_date='$yestStr' group by device_id,company,product_id,province having nvl(max(active_user),'')='' --游客+今日新用户
+         |    ) a left join (
+         |    select device_id,company,product_id,province from dws.dws_uv_increase where count_date='$yestStr' group by device_id,company,product_id,province having nvl(max(active_user),'')='' --今日新用户
+         |    ) b on a.company=b.company and a.device_id=b.device_id and a.product_id=b.product_id and a.province=b.province
+         |    ) t where t.nvlid!='0000' group by t.product_id,t.company,t.province
+         |  ) e on e.product_id=d.product_id and e.company=d.company and e.province=d.province
+         |) tt
+         |group by tt.product_id,tt.company,tt.province,tt.bus_reg,tt.new_reg,tt.new_device_cu,tt.tou_device_cu
+         |grouping sets(
+         |(tt.product_id,tt.company,tt.province),
+         |(tt.product_id,tt.company),
+         |(tt.product_id,tt.province),
+         |(tt.product_id)
+         |)
       """.stripMargin
 
     spark.sql(insertSql)
-
-    //插入 各省份的数据
-    val insertSql1 =
-      s"""
-         |insert into table ads.ads_puser_conversion partition(count_date)
-         |select t.product_id,t.company,t.province,'1',c.cu as bus_reg,t.new_reg ,(c.cu-t.new_reg) as tou_reg,round(new_reg/c.cu,2) as new_reg_ratio,round((c.cu-t.new_reg)/d.tou_cu,2) as tou_active_reg_ratio,dws.dateUtilUDF('week',unix_timestamp('$yestStr', 'yyyyMMdd')),'$yestStr' from (
-         |select b.product_id,count(DISTINCT (b.user_id)) as new_reg,b.company,a.province from (-- 新用户注册数
-         |select aa.product_id,aa.company,aa.active_user,aa.province from dws.dws_uv_total aa join ( -- 采集注册用户中设备当日首次出现为新用户ID
-         |select device_id,product_id,company  from dws.dws_uv_increase where nvl(active_user,'')!='' and count_date='$yestStr' group by device_id,product_id,company -- 新用户表中的注册用户（新注册、游客注册）的设备ID
-         |) bb on aa.device_id=bb.device_id and from_unixtime(cast(substring(aa.first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' and nvl(aa.active_user,'')!='' and aa.country='中国'-- 筛选出当天出现的设备
-         |) a join (
-         |select u1.user_id as user_id,u1.product_id,u1.company,u2.province from dwd.dwd_product_user u1 left join dwd.dwd_user_area u2 on u1.product_id=u2.product_id and u1.company=u2.company and u1.user_id=u2.active_user where -- 当天注册用户
-         |from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' group by u1.user_id,u1.product_id,u1.company,u2.province
-         |) b on a.active_user=b.user_id and a.product_id=b.product_id  and a.company=b.company and a.province=b.province
-         |group by b.product_id,b.company,a.province ) t join (
-         |select count(user_id) as cu,product_id,company,province from (
-         |select u1.user_id,u1.product_id,u1.company,u2.province from dwd.dwd_product_user u1 left join dwd.dwd_user_area u2 on u1.product_id=u2.product_id and u1.company=u2.company and u1.user_id=u2.active_user where -- 当天注册用户
-         |from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' group by u1.user_id,u1.product_id,u1.company,u2.province,u1.user_id) group by product_id,company,province
-         |) c on t.product_id=c.product_id and t.company=c.company and t.province=c.province
-         |join (
-         |select t.product_id,t.company,t.province,count(distinct(t.device_id)) as tou_cu from (
-         |select a.product_id,a.company,a.province,a.device_id,nvl(b.device_id,'0000') as nvlid from (
-         |select device_id,company,product_id,province from dws.dws_uv_daily where count_date='$yestStr' group by device_id,company,product_id,province having nvl(max(active_user),'')='' --游客+今日新用户
-         |) a left join (
-         |select device_id,company,product_id,province from dws.dws_uv_increase where count_date='$yestStr' group by device_id,company,product_id,province having nvl(max(active_user),'')='' --今日新用户
-         |) b on a.company=b.company and a.device_id=b.device_id and a.product_id=b.product_id and a.province=b.province
-         |) t where t.nvlid='0000' group by t.product_id,t.company,t.province
-         |) d on  t.product_id=d.product_id and t.company=d.company and t.province=d.province
-         |
-       """.stripMargin
-    spark.sql(insertSql1)
-
-    val insertSql2 =
-      s"""
-         |insert into table ads.ads_puser_conversion partition(count_date)
-         |select t.product_id,'ALL','全国','0',c.cu as bus_reg,t.new_reg ,(c.cu-t.new_reg) as tou_reg,round(new_reg/c.cu,2) as new_reg_ratio,round((c.cu-t.new_reg)/d.tou_cu,2) as tou_active_reg_ratio,dws.dateUtilUDF('week',unix_timestamp('$yestStr', 'yyyyMMdd')),'$yestStr' from (
-         |select b.product_id,count(DISTINCT (b.user_id)) as new_reg from (-- 新用户注册数
-         |select aa.product_id,aa.active_user from dws.dws_uv_total aa join ( -- 采集注册用户中设备当日首次出现为新用户ID
-         |select device_id,product_id from dws.dws_uv_increase where nvl(active_user,'')!='' and count_date='$yestStr' group by device_id,product_id-- 新用户表中的注册用户（新注册、游客注册）的设备ID
-         |) bb on aa.device_id=bb.device_id and from_unixtime(cast(substring(aa.first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' and nvl(aa.active_user,'')!=''  and aa.country='中国'-- 筛选出当天出现的设备
-         |) a join (
-         |select user_id as user_id,product_id from dwd.dwd_product_user where -- 当天注册用户
-         |from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' group by user_id,product_id
-         |) b on a.active_user=b.user_id and a.product_id=b.product_id
-         |group by b.product_id) t join (
-         |select count(distinct(user_id)) as cu,product_id from dwd.dwd_product_user where
-         |from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr'  group by product_id
-         |) c on t.product_id=c.product_id
-         |join (
-         |select t.product_id,count(distinct(t.device_id)) as tou_cu from (
-         |select a.product_id,a.device_id,nvl(b.device_id,'0000') as nvlid from (
-         |select device_id,product_id from dws.dws_uv_daily where count_date='$yestStr' group by device_id,product_id having nvl(max(active_user),'')='' --游客+今日新用户
-         |) a left join (
-         |select device_id,product_id from dws.dws_uv_increase where count_date='$yestStr' group by device_id,product_id having nvl(max(active_user),'')='' --今日新用户
-         |) b on  a.device_id=b.device_id and a.product_id=b.product_id
-         |) t where t.nvlid='0000' group by t.product_id
-         |) d on  t.product_id=d.product_id
-       """.stripMargin
-    spark.sql(insertSql2)
-
-    val insertSql3 =
-      s"""
-         |insert into table ads.ads_puser_conversion partition(count_date)
-         |select t.product_id,'ALL',t.province,'1',c.cu as bus_reg,t.new_reg ,(c.cu-t.new_reg) as tou_reg,round(new_reg/c.cu,2) as new_reg_ratio,round((c.cu-t.new_reg)/d.tou_cu,2) as tou_active_reg_ratio,dws.dateUtilUDF('week',unix_timestamp('$yestStr', 'yyyyMMdd')),'$yestStr' from (
-         |select b.product_id,count(DISTINCT (b.user_id)) as new_reg,a.province from (-- 新用户注册数
-         |select aa.product_id,aa.active_user,aa.province from dws.dws_uv_total aa join ( -- 采集注册用户中设备当日首次出现为新用户ID
-         |select device_id,product_id  from dws.dws_uv_increase where nvl(active_user,'')!='' and count_date='$yestStr' group by device_id,product_id -- 新用户表中的注册用户（新注册、游客注册）的设备ID
-         |) bb on aa.device_id=bb.device_id and from_unixtime(cast(substring(aa.first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' and nvl(aa.active_user,'')!='' and aa.country='中国'-- 筛选出当天出现的设备
-         |) a join (
-         |select u1.user_id as user_id,u1.product_id,u2.province from dwd.dwd_product_user u1 left join dwd.dwd_user_area u2 on u1.product_id=u2.product_id and u1.user_id=u2.active_user where -- 当天注册用户
-         |from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' group by u1.user_id,u1.product_id,u2.province
-         |) b on a.active_user=b.user_id and a.product_id=b.product_id  and a.province=b.province
-         |group by b.product_id,a.province ) t join (
-         |select count(user_id) as cu,product_id,province from (
-         |select u1.user_id,u1.product_id,u2.province from dwd.dwd_product_user u1 left join dwd.dwd_user_area u2 on u1.product_id=u2.product_id and u1.user_id=u2.active_user where -- 当天注册用户
-         |from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' group by u1.user_id,u1.product_id,u2.province,u1.user_id) group by product_id,province
-         |) c on t.product_id=c.product_id and t.province=c.province
-         |join (
-         |select t.product_id,t.province,count(distinct(t.device_id)) as tou_cu from (
-         |select a.product_id,a.province,a.device_id,nvl(b.device_id,'0000') as nvlid from (
-         |select device_id,product_id,province from dws.dws_uv_daily where count_date='$yestStr' group by device_id,product_id,province having nvl(max(active_user),'')='' --游客+今日新用户
-         |) a left join (
-         |select device_id,product_id,province from dws.dws_uv_increase where count_date='$yestStr' group by device_id,product_id,province having nvl(max(active_user),'')='' --今日新用户
-         |) b on   a.device_id=b.device_id and a.product_id=b.product_id and a.province=b.province
-         |) t where t.nvlid='0000' group by t.product_id,t.province
-         |) d on  t.product_id=d.product_id and t.province=d.province
-       """.stripMargin
-    spark.sql(insertSql3)
   }
 
   def writeAdsPUserIncrease2PostgreSql(spark: SparkSession, yesStr: String) = {

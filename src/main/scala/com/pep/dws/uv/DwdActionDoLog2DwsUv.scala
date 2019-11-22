@@ -160,7 +160,7 @@ object DwdActionDoLog2DwsUv {
     //1.插入增量数据
     val insertSql =
       s"""
-         |insert into dws.dws_uv_total
+         |insert overwrite table dws.dws_uv_total
          |select product_id,
          |       company,
          |       split(max(concat(last_access_time, '-', remote_addr)), '-')[1] as last_remote_addr,
@@ -177,12 +177,12 @@ object DwdActionDoLog2DwsUv {
          |       sum(session_count)                                             as session_count,
          |       '$yestStr'
          |from dws.dws_uv_daily
-         |where count_date = '$yestStr'
          |group by product_id, company, active_user, device_id
       """.stripMargin
 
     spark.sql(insertSql)
 
+    /*
     //2.修改标明 dws_uv_total_20190504
     val dropYestStrSql =
       s"""
@@ -228,8 +228,8 @@ object DwdActionDoLog2DwsUv {
          |drop table if exists dws_uv_total_${_7DaysBefore}
       """.stripMargin
     spark.sql(dropSql)
+    */
 
-    // 每日新增  判断标准：从dws_uv_total表中算出 first_access_time 为昨天的用户数据
 
   }
 

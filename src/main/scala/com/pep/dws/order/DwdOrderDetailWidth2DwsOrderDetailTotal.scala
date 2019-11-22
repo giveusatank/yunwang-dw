@@ -9,7 +9,7 @@ import org.apache.spark.sql.SparkSession
 
 import scala.util.control.Breaks
 
-
+//一起代码无用
 object DwdOrderDetailWidth2DwsOrderDetailTotal {
 
   //将dwd层order全量表清洗到dws层order历史累计表

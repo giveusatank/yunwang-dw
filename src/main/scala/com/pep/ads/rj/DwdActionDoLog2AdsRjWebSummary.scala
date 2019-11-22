@@ -43,7 +43,7 @@ object DwdActionDoLog2AdsRjWebSummary {
          |       put_date
          |from dwd.action_do_log
          |where put_date = "$yestStr"
-         |  and product_id = "300"
+         |  and product_id in ("300","301")
          |  and str_to_map(nvl(hardware, "dpi:null"), ',', ':')['dpi'] != 'null'
          |group by put_date, product_id, company, str_to_map(nvl(hardware, "dpi:null"), ',', ':')['dpi']
       """.stripMargin
@@ -80,7 +80,7 @@ object DwdActionDoLog2AdsRjWebSummary {
          |       put_date
          |from dwd.action_do_log
          |where put_date = "${yestStr}"
-         |  and product_id = "300"
+         |  and product_id in ("300","301")
          |  and not (str_to_map(nvl(soft, "b-type:null"), '\\/', ':')['b-type'] = 'null' or soft = 'null' or soft = '')
          |group by put_date, product_id, company, str_to_map(nvl(soft, "b-type:null"), '\\/', ':')['b-type']
       """.stripMargin
@@ -136,7 +136,7 @@ object DwdActionDoLog2AdsRjWebSummary {
          |                  else 'E' END) as tie
          |      from dws.dws_uv_session_daily
          |      where count_date = '${yestStr}'
-         |        and product_id = '300'
+         |        and product_id in ("300","301")
          |      group by product_id, company, country, province, city, active_user) as t
          |group by t.product_id, t.company, t.country, t.province, t.city, t.tie
       """.stripMargin
@@ -192,7 +192,7 @@ object DwdActionDoLog2AdsRjWebSummary {
          |                  else 'E' END) as tie
          |      from dws.dws_uv_session_daily
          |      where count_date = '${yestStr}'
-         |        and product_id = '300'
+         |        and product_id in ("300","301")
          |      group by product_id, company, country, province, city, group_id) as t
          |group by t.product_id, t.company, t.country, t.province, t.city, t.tie
        """.stripMargin
@@ -233,7 +233,7 @@ object DwdActionDoLog2AdsRjWebSummary {
          |       '${yestStr}'
          |from dws.dws_uv_daily
          |where count_date = "$yestStr"
-         |  and product_id = "300"
+         |  and product_id in ("300","301")
          |group by product_id, company, country, province, city
       """.stripMargin
     spark.sql(insertSql)
@@ -277,7 +277,7 @@ object DwdActionDoLog2AdsRjWebSummary {
          |       '${yestStr}'
          |from ads_uv_daily
          |where count_date = '$yestStr'
-         |  and product_id = "300"
+         |  and product_id in ("300","301")
       """.stripMargin
     spark.sql(insertSql)
   }

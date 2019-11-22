@@ -81,7 +81,7 @@ object DwdActionDoLog2AdsTerminalProperty {
         |upper(if(instr(str_to_map(os)['os'],'iOS')!=0 or instr(str_to_map(os)['os'],'iPhone')!=0,'IOS',
         |if(instr(str_to_map(os)['os'],'Windows')!=0,regexp_extract(str_to_map(os)['os'],'(\\\\D*\\\\d*\\\\.\\\\d*)',0),'Android'))) as os_c,
         |upper(str_to_map(os)['c-type']) as operator_c,
-        |upper(str_to_map(os)['net-type']) as connect_c,grouping_id() as gid,count(1) as cou
+        |upper(str_to_map(os)['net-type']) as connect_c,grouping_id() as gid,count(distinct(device_id)) as cou
         |from dwd.action_do_log where put_date<='${yesStr}' and put_date>='${yesMon}' and log_version='2'
         |group by product_id,company,country,province,dpi_c,brand_c,machine_c,os_c,operator_c,connect_c grouping sets(
         |(product_id,company,country,province,dpi_c),
