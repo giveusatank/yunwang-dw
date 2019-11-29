@@ -31,36 +31,40 @@ object DwdActionDoLog2DwsUv {
         |group_actions string,
         |first_access_time string,
         |last_access_time string,
-        |action_count bigint
+        |action_count bigint,
+        |launch_used_time string,
+        |launch_count string
         |)
         |partitioned by (count_date int)
         |STORED AS parquet
       """.stripMargin
     spark.sql(createSql)
+    //启动次数统计launch_count: 访问会话数和同一会话内如果超过15分钟发生访问间隔为新启动。
     val _sql1 =
       s"""
          |insert overwrite table dws.dws_uv_session_daily partition (count_date)
          |select product_id,
          |       dws.yunwangDateFormat('company',company) as company,
-         |       remote_addr,
-         |       country,
-         |       province,
-         |       city,
-         |       location,
-         |       region,
+         |       split(max(concat(start_time, '-', remote_addr)), '-')[1] as remote_addr,
+         |       split(max(concat(start_time, '-', country)), '-')[1] as country,
+         |       split(max(concat(start_time, '-', province)), '-')[1] as province ,
+         |       split(max(concat(start_time, '-', city)), '-')[1] as city,
+         |       split(max(concat(start_time, '-', location)), '-')[1] as location,
+         |       split(max(concat(start_time, '-', region)), '-')[1] as region,
          |       active_user,
          |       device_id,
          |       group_id,
          |       ''              as group_actions,
-         |       min(start_time) as
-         |                          first_access_time,
+         |       min(start_time) as first_access_time,
          |       max(start_time) as last_access_time,
          |       count(1)        as action_count,
+         |       round(dws.productTimeUsed(str_to_map(concat_ws(",", collect_set(concat_ws(':', cast(start_time as string), cast(action_title as string))))),900,0)/1000,0)  as launch_used_time,
+         |       dws.productTimeUsed(str_to_map(concat_ws(",", collect_set(concat_ws(':', cast(start_time as string), cast(action_title as string))))),900,2)  as launch_count,
          |       put_date
          |from dwd.action_do_log
-         |where put_date = '$yestStr' and nvl(product_id,'')!='' and not(action_title like 'sys_1%' or action_title like 'sys_4%')
-         |group by product_id, remote_addr, dws.yunwangDateFormat('company',company), country, province, city, location,region, active_user, device_id, group_id, put_date
-         |
+         |where put_date = '$yestStr' and nvl(product_id,'')!='' and nvl(device_id,'')!='' and not(action_title like 'sys_1%' or action_title like 'sys_4%')
+         |group by product_id, remote_addr, dws.yunwangDateFormat('company',company),
+         |country, province, city, location,region, active_user, device_id, group_id, put_date
      """.stripMargin
 
     spark.sql(_sql1)
@@ -90,7 +94,9 @@ object DwdActionDoLog2DwsUv {
         |first_access_time string,
         |last_access_time string,
         |action_count bigint,
-        |session_count bigint
+        |session_count bigint,
+        |launch_used_time string,
+        |launch_count string
         |)
         |partitioned by (count_date int)
         |STORED AS parquet
@@ -101,22 +107,25 @@ object DwdActionDoLog2DwsUv {
          |insert overwrite table dws.dws_uv_daily partition (count_date)
          |select product_id,
          |       company,
-         |       remote_addr,
-         |       country,
-         |       province,
-         |       city,
-         |       location,
-         |       region,
+         |       split(max(concat(last_access_time, '-', remote_addr)), '-')[1] as remote_addr,
+         |       split(max(concat(last_access_time, '-', country)), '-')[1] as country,
+         |       split(max(concat(last_access_time, '-', province)), '-')[1] as province ,
+         |       split(max(concat(last_access_time, '-', city)), '-')[1] as city,
+         |       split(max(concat(last_access_time, '-', location)), '-')[1] as location,
+         |       split(max(concat(last_access_time, '-', region)), '-')[1] as region,
          |       active_user,
          |       device_id,
          |       min(first_access_time) as first_access_time,
          |       max(last_access_time)  as last_access_time,
          |       sum(action_count)      as action_count,
          |       count(1)               as session_count,
+         |       sum(launch_used_time),
+         |       sum(launch_count),
          |       count_date
          |from dws.dws_uv_session_daily
          |where count_date = '$yestStr'
-         |group by product_id, remote_addr, company, country, province, city, location,region, active_user, device_id, count_date
+         |group by product_id, remote_addr, company, country, province, city,
+         |location,region, active_user, device_id, count_date
          |
       """.stripMargin
 
@@ -150,6 +159,8 @@ object DwdActionDoLog2DwsUv {
         |last_access_time string,
         |action_count bigint,
         |session_count bigint,
+        |launch_used_time string,
+        |launch_count string,
         |count_date int
         |)
         |STORED AS parquet
@@ -175,6 +186,8 @@ object DwdActionDoLog2DwsUv {
          |       max(last_access_time)                                          as last_access_time,
          |       sum(action_count)                                              as action_count,
          |       sum(session_count)                                             as session_count,
+         |       sum(launch_used_time)                                          as action_count,
+         |       sum(launch_count)                                              as session_count,
          |       '$yestStr'
          |from dws.dws_uv_daily
          |group by product_id, company, active_user, device_id

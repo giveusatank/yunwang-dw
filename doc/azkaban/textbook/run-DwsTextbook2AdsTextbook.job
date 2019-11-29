@@ -3,7 +3,7 @@ type=command
 command=sh /usr/local/spark-2.2.3-bin-hadoop2.6/bin/spark-submit \
  --master yarn \
  --deploy-mode cluster \
- --num-executors 8 \
+ --num-executors 20 \
  --executor-memory 3G \
  --driver-memory 1G \
  --executor-cores 2 \

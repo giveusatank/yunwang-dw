@@ -53,8 +53,8 @@ object DwsUvSessionDaily2AdsUsed {
          |'$yestStr'
          |from(
          |select product_id,company,province,
-         |count(distinct(group_id)) as cu_group,
-         |round((sum(last_access_time)-sum(first_access_time))/1000,0) as used_time,
+         |sum(launch_count) as cu_group,
+         |sum(launch_used_time) as used_time,
          |device_id ,
          |if(nvl(max(active_user),'')='',0,1) as user_type
          |from dws.dws_uv_session_daily where count_date='$yestStr' and country='中国'
@@ -104,9 +104,9 @@ object DwsUvSessionDaily2AdsUsed {
          |'$yestStr'
          |from (
          |select product_id,company,province,
-         |count(distinct(group_id)) as cu_group,
-         |round((sum(last_access_time)-sum(first_access_time))/1000,0) as avg_user_used_time,
-         |round((sum(last_access_time)-sum(first_access_time))/1000/count(distinct(group_id)),0) as avg_session_used_time,
+         |sum(launch_count) as cu_group,
+         |sum(launch_used_time) as avg_user_used_time,
+         |round(sum(launch_used_time)/sum(launch_count),0) as avg_session_used_time,
          |device_id ,
          |if(nvl(max(active_user),'')='',0,1) as user_type
          |from dws.dws_uv_session_daily where count_date='$yestStr' and country='中国'

@@ -174,14 +174,8 @@ object DwdProductUser2AdsPuserIncrease {
          |    ) b on a.company=b.company and a.device_id=b.device_id and a.product_id=b.product_id and a.province=b.province
          |    ) t where t.nvlid='0000' group by t.product_id,t.company,t.province
          |  ) d on  t.product_id=d.product_id and t.company=d.company and t.province=d.province
-         |  left join ( -- 新游客
-         |    select t.product_id,t.company,count(distinct(device_id)) as new_device_cu,t.province from (
-         |    select a.product_id,a.company,a.device_id,nvl(b.device_id,'0000') as nvlid,a.province from (
-         |    select device_id,company,product_id,product_id,province from dws.dws_uv_daily where count_date='$yestStr' group by device_id,company,product_id,province having nvl(max(active_user),'')='' --游客+今日新用户
-         |    ) a left join (
-         |    select device_id,company,product_id,province from dws.dws_uv_increase where count_date='$yestStr' group by device_id,company,product_id,province having nvl(max(active_user),'')='' --今日新用户
-         |    ) b on a.company=b.company and a.device_id=b.device_id and a.product_id=b.product_id and a.province=b.province
-         |    ) t where t.nvlid!='0000' group by t.product_id,t.company,t.province
+         |  left join ( -- 今日新用户
+         |    select count(distinct(device_id)) as new_device_cu,company,product_id,province from dws.dws_uv_increase where count_date='$yestStr' group by company,product_id,province  --今日新用户
          |  ) e on e.product_id=d.product_id and e.company=d.company and e.province=d.province
          |) tt
          |group by tt.product_id,tt.company,tt.province,tt.bus_reg,tt.new_reg,tt.new_device_cu,tt.tou_device_cu

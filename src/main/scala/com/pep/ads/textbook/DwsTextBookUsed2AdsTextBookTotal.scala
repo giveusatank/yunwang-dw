@@ -29,8 +29,9 @@ object DwsTextBookUsed2AdsTextBookTotal {
       |    start_action_count    string,
       |    action_count          string,
       |    user_count            string,
-      |    gid                   string
-      |) partitioned by (count_date string)
+      |    gid                   string,
+      |    count_date            string
+      |)
       |stored as textfile
     """.stripMargin
 
@@ -39,7 +40,7 @@ object DwsTextBookUsed2AdsTextBookTotal {
 
     val sql_i1 =
       s"""
-         |insert overwrite table ads.ads_textbook_used_total_cube partition (count_date)
+         |insert overwrite table ads.ads_textbook_used_total_cube
          |select product_id,
          |company,
          |province,
@@ -65,6 +66,8 @@ object DwsTextBookUsed2AdsTextBookTotal {
          |(product_id,province,zxxkc),
          |(product_id,province,nj),
          |(product_id,rkxd),
+         |(product_id,zxxkc,nj),
+         |(product_id,passive_obj,zxxkc),
          |(product_id,zxxkc),
          |(product_id,nj))
       """.stripMargin
@@ -82,8 +85,9 @@ object DwsTextBookUsed2AdsTextBookTotal {
         |    sum_time_consume      string,
         |    start_action_count    string,
         |    action_count          string,
-        |    gid                   string
-        |) partitioned by (count_date string)
+        |    gid                   string,
+        |    count_date            string
+        |)
         |stored as textfile
       """.stripMargin
 
@@ -92,7 +96,7 @@ object DwsTextBookUsed2AdsTextBookTotal {
 
     val sql_i2 =
       s"""
-         |insert overwrite table ads.ads_textbook_user_area partition (count_date)
+         |insert overwrite table ads.ads_textbook_user_area
          |select product_id,company,province,
          |count(distinct(user_id)) as user_count,
          |sum(sum_time_consume)as sum_time_consume,
@@ -120,7 +124,7 @@ object DwsTextBookUsed2AdsTextBookTotal {
     val props = DbProperties.propScp
     props.setProperty("tableName_1","ads_textbook_used_total_cube")
     props.setProperty("tableName_2","ads_textbook_user_area")
-    props.setProperty("write_mode","Append")
+    props.setProperty("write_mode","Overwrite")
 
     //使用Ads库
     spark.sql("use ads")
