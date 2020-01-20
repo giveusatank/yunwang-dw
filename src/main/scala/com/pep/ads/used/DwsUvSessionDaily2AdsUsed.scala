@@ -122,13 +122,11 @@ object DwsUvSessionDaily2AdsUsed {
          |(product_id,user_type,case when cu_group  > 5 then '5+' else cast(cu_group as string) end,company,province),
          |(product_id,user_type,case when cu_group  > 5 then '5+' else cast(cu_group as string) end,company),
          |(product_id,user_type,case when cu_group  > 5 then '5+' else cast(cu_group as string) end,province),
-         |(product_id,user_type,case when cu_group  > 5 then '5+' else cast(cu_group as string) end
-         |),
+         |(product_id,user_type,case when cu_group  > 5 then '5+' else cast(cu_group as string) end ),
          |(product_id,user_type,dws.GroupNameUDF('avg_user_used_time', avg_user_used_time),company,province),
          |(product_id,user_type,dws.GroupNameUDF('avg_user_used_time', avg_user_used_time),company),
          |(product_id,user_type,dws.GroupNameUDF('avg_user_used_time', avg_user_used_time),province),
-         |(product_id,user_type,dws.GroupNameUDF('avg_user_used_time', avg_user_used_time)
-         |),
+         |(product_id,user_type,dws.GroupNameUDF('avg_user_used_time', avg_user_used_time) ),
          |(product_id,user_type,dws.GroupNameUDF('avg_user_used_time', avg_session_used_time),company,province),
          |(product_id,user_type,dws.GroupNameUDF('avg_user_used_time', avg_session_used_time),company),
          |(product_id,user_type,dws.GroupNameUDF('avg_user_used_time', avg_session_used_time),province),

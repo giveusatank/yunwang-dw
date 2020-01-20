@@ -83,6 +83,8 @@ object DwsUv2AdsUvSummary {
     cal.setTime(new Date())
     cal.add(Calendar.DATE, -180)
     val hyTimestamp = cal.getTime.getTime
+    cal.add(Calendar.DATE, 150)
+    val hmTimestamp = cal.getTime.getTime
     spark.sql("use ads")
     val createSql =
       """
@@ -129,7 +131,32 @@ object DwsUv2AdsUvSummary {
          |                count(1)           as user_count,
          |                sum(action_count)  as action_count,
          |                sum(session_count) as session_count
-         |         from dws.dws_uv_total where last_access_time > '$hyTimestamp'
+         |         from dws.dws_uv_total where last_access_time > '$hyTimestamp' and product_id not in ('300','301')
+         |         group by product_id, company, country, province, city, location, device_id)
+         |group by product_id, company, country, province, city, location
+         |union
+         |select product_id,
+         |       company,
+         |       country,
+         |       province,
+         |       city,
+         |       location,
+         |       count(user_count)  as user_count,
+         |       sum(action_count)  as action_count,
+         |       sum(session_count) as session_count,
+         |       '$yestStr',
+         |       '$yestStr'
+         |from (
+         |         select product_id,
+         |                company,
+         |                country,
+         |                province,
+         |                city,
+         |                location,
+         |                count(1)           as user_count,
+         |                sum(action_count)  as action_count,
+         |                sum(session_count) as session_count
+         |         from dws.dws_uv_total where last_access_time > '$hmTimestamp' and product_id in ('300','301')
          |         group by product_id, company, country, province, city, location, device_id)
          |group by product_id, company, country, province, city, location
       """.stripMargin
@@ -226,7 +253,8 @@ object DwsUv2AdsUvSummary {
       s"""
          |insert overwrite table ads_uv_area_until_week_month partition(count_date='${todayStr}')
          |select product_id,company,country,province,count(distinct(temp1.device_id))
-         |as act_uv,'${week_type}' from (select product_id,company,country,province,device_id from dws.dws_uv_total where
+         |as act_uv,'${week_type}',dws.dateUtilUDF('week',unix_timestamp('${todayStr}','yyyyMMdd'))
+         |from (select product_id,company,country,province,device_id from dws.dws_uv_total where
          |(last_access_time>='${beginWeekTs}' and last_access_time<='${endWeekTs}' ) or
          |(first_access_time>='${beginWeekTs}' and first_access_time<='${endWeekTs}') )
          |as temp1 group by product_id,company,country,province
@@ -282,9 +310,10 @@ object DwsUv2AdsUvSummary {
 
     val insertSql_1 =
       s"""
-         |insert overwrite table ads_uv_area_until_week_month partition(count_date='${todayStr}')
+         |insert into table ads_uv_area_until_week_month partition(count_date='${todayStr}')
          |select product_id,company,country,province,count(distinct(temp1.device_id))
-         |as act_uv,'${month_type}' from (select product_id,company,country,province,device_id from dws.dws_uv_total where
+         |as act_uv,'${month_type}',concat(substring('${todayStr}',1,4),"-",substring('${todayStr}',5,2))
+         |from (select product_id,company,country,province,device_id from dws.dws_uv_total where
          |(last_access_time>='${beginMonthTs}' and last_access_time<='${endMonthTs}' ) or
          |(first_access_time>='${beginMonthTs}' and first_access_time<='${endMonthTs}') )
          |as temp1 group by product_id,company,country,province
@@ -293,7 +322,7 @@ object DwsUv2AdsUvSummary {
 
     val insertSql_2 =
       s"""
-         |insert overwrite table ads_uv_incr_area_until_week_month partition(count_date='${todayStr}')
+         |insert into table ads_uv_incr_area_until_week_month partition(count_date='${todayStr}')
          |select temp1.product_id,temp1.company,temp1.country,temp1.province,count(distinct(temp1.device_id))
          |as inc_uv,'${month_type}' from (select product_id,company,country,province,device_id from dws.dws_uv_total where
          |first_access_time>='${beginMonthTs}' and first_access_time<='${endMonthTs}')
@@ -304,7 +333,7 @@ object DwsUv2AdsUvSummary {
 
     val insertSql_3 =
       s"""
-         |insert overwrite table ads_puser_area_until_week_month partition(count_date='${todayStr}')
+         |insert into table ads_puser_area_until_week_month partition(count_date='${todayStr}')
          |select product_id,company,country,province,count(distinct(temp1.device_id))
          |as act_uv,'${month_type}' from (select product_id,company,country,province,device_id from dws.dws_uv_total where
          |((last_access_time>='${beginMonthTs}' and last_access_time<='${endMonthTs}' ) or

@@ -78,18 +78,21 @@ object DwdActionDoLog2AdsTerminalProperty {
         |(select product_id,company,country,province,upper(str_to_map(hardware)['dpi']) as dpi_c,
         |upper(dws.yunwangdateformat("brand",str_to_map(hardware)['m-type'])) as brand_c,
         |upper(str_to_map(hardware)['m-type']) as machine_c,
-        |upper(if(instr(str_to_map(os)['os'],'iOS')!=0 or instr(str_to_map(os)['os'],'iPhone')!=0,'IOS',
-        |if(instr(str_to_map(os)['os'],'Windows')!=0,regexp_extract(str_to_map(os)['os'],'(\\\\D*\\\\d*\\\\.\\\\d*)',0),'Android'))) as os_c,
-        |upper(str_to_map(os)['c-type']) as operator_c,
-        |upper(str_to_map(os)['net-type']) as connect_c,grouping_id() as gid,count(distinct(device_id)) as cou
+        |upper(dws.yunwangdateformat('os',(upper(if(instr(str_to_map(os)['os'],'iOS')!=0 or instr(str_to_map(os)['os'],'iPhone')!=0,'IOS',
+        |if(instr(str_to_map(os)['os'],'Windows')!=0,regexp_extract(str_to_map(os)['os'],'(\\\\D*\\\\d*\\\\.\\\\d*)',0),'Android')))))) as os_c,
+        |upper(if(instr(upper(str_to_map(os)['c-type']),'UNICOM')!=0,'中国联通',if(instr(upper(str_to_map(os)['c-type']),'MOBILE')!=0 or
+        |instr(upper(str_to_map(os)['c-type']),'中國移動')!=0 or instr(upper(str_to_map(os)['c-type']),'CMCC')!=0,'中国移动',
+        |if(instr(upper(str_to_map(os)['c-type']),'TELECOM')!=0,'中国电信',str_to_map(os)['c-type'])))) as operator_c,
+        |upper(if(nvl(str_to_map(os)['net-type'],'')!='',str_to_map(os)['net-type'],
+        |if(nvl(str_to_map(os)['c-net-type'],'')!='',dws.yunwangdateformat('connect',str_to_map(os)['c-net-type']),NULL))) as connect_c
+        |,grouping_id() as gid,count(distinct(device_id)) as cou
         |from dwd.action_do_log where put_date<='${yesStr}' and put_date>='${yesMon}' and log_version='2'
-        |group by product_id,company,country,province,dpi_c,brand_c,machine_c,os_c,operator_c,connect_c grouping sets(
-        |(product_id,company,country,province,dpi_c),
+        |group by product_id,company,country,province,dpi_c,brand_c,machine_c,os_c,operator_c,connect_c grouping sets((product_id,company,country,province,dpi_c),
         |(product_id,company,country,province,brand_c),
         |(product_id,company,country,province,machine_c),
         |(product_id,company,country,province,os_c),
         |(product_id,company,country,province,operator_c),
-        |(product_id,company,country,province,connect_c)) ) as temp1 ) as temp2 where temp2.rak<=10
+        |(product_id,company,country,province,connect_c))) as temp1 ) as temp2 where temp2.rak<=10
       """.stripMargin
 
     spark.sql(etlSql)
@@ -118,6 +121,9 @@ object DwdActionDoLog2AdsTerminalProperty {
     df_1.write.mode(props.getProperty("write_mode")).
       jdbc(props.getProperty("url"),props.getProperty("tableName"),props)
   }
+
+
+
 
   def doAction(spark:SparkSession, yesStr:String,yesMon: String) = {
     writeDwdActionDoLog2AdsTerminalProperty(spark,yesStr,yesMon)

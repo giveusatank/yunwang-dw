@@ -140,9 +140,9 @@ object OdsJxwResource2DwdResourceJxw {
     val selectSql =
       """
         |select a.*,b.s_state as tb_state,b.zxxkc,b.nj from (
-        |select * from (select *, row_number() over (partition by id order by row_timestamp desc ) num from ods.ods_jxw_platform_p_resource ) where num=1 and row_status='1'
+        |select * from (select *, row_number() over (partition by id order by row_timestamp desc ) num from ods.ods_jxw_platform_p_resource ) where num=1 and row_status in ('1','2')
         |) a join (
-        |select * from (select *, row_number() over (partition by id order by row_timestamp desc ) num from ods.ods_jxw_platform_p_textbook ) where num=1 and row_status='1'
+        |select * from (select *, row_number() over (partition by id order by row_timestamp desc ) num from ods.ods_jxw_platform_p_textbook ) where num=1 and row_status in ('1','2')
         |) b on a.tb_id=b.id
       """.stripMargin
     val readRddDF:DataFrame = spark.sql(selectSql)

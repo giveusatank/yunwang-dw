@@ -1,5 +1,5 @@
 1. ods都建成外部表;其它层可建成内部表，使用parquet（log表）或者json（业务表）格式存贮。
 2. 数仓所有表的建表语句放在任务中。
 3. 安分区执行的任务在执行插入使用insert overwrite
-4. ods层分区字段用put_date,其他层使用count_date;ads层必须使用分区表。
+4. ods层分区字段用put_date,其他层使用count_date;ads层累计维度的表可使用overwrite导出，其他表必须使用分区表，按分区维度导出。
 5. 表名命名ads_uv_total  数仓层_底层模型缩写（uv,textbook，resource,puser,order）_维度

@@ -33,15 +33,13 @@ object DwdZykResource2AdsZykResource {
         |zyk_create_time    string,
         |zyk_publish_time   string,
         |zywz               string
-        |) partitioned by (count_date string)
-        |stored as textfile
+        |) stored as textfile
       """.stripMargin
     spark.sql(createSql)
-    spark.sql("msck repair table ads.ads_resource_jxw")
 
     val insertSql =
       s"""
-         |insert overwrite table ads_resource_zyk partition(count_date)
+         |insert overwrite table ads_resource_zyk
          |select
          |tb_id,
          |'' as tb_state,
@@ -57,8 +55,7 @@ object DwdZykResource2AdsZykResource {
          |cast(sum(file_size) as decimal(32,0))  as sum_size,
          |from_unixtime(cast(substring(create_time, 1, 10) as bigint),'yyyyMMdd') as zyk_create_time,
          |from_unixtime(cast(substring(publish_time, 1, 10) as bigint),'yyyyMMdd') as zyk_publish_time,
-         |'0' as zywz,
-         |'$yestStr' as count_date
+         |'0' as zywz
          |from dwd.dwd_resource_zyk  where nvl(tb_id,'') !=''
          |group by tb_id,r_status,dws.geteducode(tb_id,'nj') ,cid3,r_ext,
          |from_unixtime(cast(substring(create_time, 1, 10) as bigint),'yyyyMMdd'),
@@ -66,12 +63,9 @@ object DwdZykResource2AdsZykResource {
       """.stripMargin
 
     spark.sql(insertSql)
-    spark.sql("msck repair table ads.ads_resource_zyk")
     val selectSql =
       s"""
-        |select tb_id,tb_state,nj,zxxkc, dzwjlx ,dzwjlx_name,ex_zynrlx,ex_zynrlx_name,ex_zycj,s_state,
-        |count_file,sum_size,zyk_create_time,zyk_publish_time,zywz,count_date
-        |from ads_resource_zyk where count_date='${yestStr}'
+        |select * from ads_resource_zyk
       """.stripMargin
     val readDate = spark.sql(selectSql)
 
@@ -79,7 +73,7 @@ object DwdZykResource2AdsZykResource {
 
     var writeDF = readDate.coalesce(5)
     writeDF.write.format("jdbc").
-      mode("append").
+      mode("overwrite").
       jdbc(props.getProperty("url"),"ads_resource_zyk",props)
 
 

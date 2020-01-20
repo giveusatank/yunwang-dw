@@ -24,23 +24,22 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
       """
         |create table if not exists ads.ads_textbook_used_avg_time_consume
         |(
-        |    product_id   string,
-        |    company      string,
-        |    province     string,
-        |    zxxkc        string,
-        |    nj           string,
-        |    sum_time_consume           string,
-        |    start_action_count           string,
-        |    avg_time_consume  string
-        |)
-        |    partitioned by (data_type string,count_date string)
-        |    stored as textfile
+        |    product_id                  string,
+        |    company                     string,
+        |    province                    string,
+        |    zxxkc                       string,
+        |    nj                          string,
+        |    sum_time_consume            string,
+        |    start_action_count          string,
+        |    avg_time_consume            string,
+        |    gid                         string
+        |) stored as textfile
       """.stripMargin
     spark.sql(createSql)
 
     var ysList : List[String] = getCurrentSchoolYear(yestStr)
 
-    val insertSql1 =
+   /* val insertSql1 =
       s"""
          |insert overwrite table ads.ads_textbook_used_avg_time_consume partition(data_type,count_date)
          |select t.product_id,t.company,t.province,'',t.nj,cast(sum(t.sum_time_consume) as decimal(32,0)) as sum_time_consume,cast(sum(t.start_action_count) as decimal(32,0)) as start_action_count,cast(sum(t.sum_time_consume)/sum(t.start_action_count) as decimal(32,0)) as avg_time_consume,'nj',${yestStr} from (
@@ -60,35 +59,40 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
          | group by user_id,zxxkc,province,product_id,company) t join
          |(select user_id from dwd.dwd_order_related_width where pay_time>='${ysList.get(0)}' and pay_time<='${ysList.get(1)}' group by user_id) t1
          |on t.user_id=t1.user_id group by t.zxxkc,t.province,t.product_id,t.company
-      """.stripMargin
+      """.stripMargin*/
 
     val insertSql3 =
       s"""
-         |insert overwrite table ads.ads_textbook_used_avg_time_consume partition(data_type,count_date)
-         |select t.product_id,t.company,t.province,t.zxxkc,t.nj,cast(sum(t.sum_time_consume) as decimal(32,0)) as sum_time_consume,cast(sum(t.start_action_count) as decimal(32,0)) as start_action_count,cast(sum(t.sum_time_consume)/sum(t.start_action_count) as decimal(32,0)) as avg_time_consume,'zxxkc_nj',${yestStr} from (
+         |insert overwrite table ads.ads_textbook_used_avg_time_consume
+         |select t.product_id,t.company,t.province,t.zxxkc,t.nj,cast(sum(t.sum_time_consume) as decimal(32,0)) as sum_time_consume,
+         |cast(sum(t.start_action_count) as decimal(32,0)) as start_action_count,
+         |cast(sum(t.sum_time_consume)/sum(t.start_action_count) as decimal(32,0)) as avg_time_consume,grouping_id() as gid from (
          |select product_id,company,user_id,sum(sum_time_consume) sum_time_consume,sum(start_action_count) as start_action_count,zxxkc ,nj,province
          |from dws.dws_textbook_used_total_wide where count_date>='${ysList.get(0)}' and count_date<='${ysList.get(1)}' and country='中国'
          | group by user_id,zxxkc,nj,province,product_id,company) t join
          |(select user_id from dwd.dwd_order_related_width where pay_time>='${ysList.get(0)}' and pay_time<='${ysList.get(1)}' group by user_id) t1
-         |on t.user_id=t1.user_id group by t.zxxkc,t.nj,t.province,t.product_id,t.company
+         |on t.user_id=t1.user_id group by t.product_id,t.company,t.province,t.zxxkc,t.nj
+         |grouping sets(
+         |(t.product_id,t.company,t.province,t.zxxkc,t.nj),
+         |(t.product_id,t.company,t.province,t.zxxkc),
+         |(t.product_id,t.company,t.province,t.nj)
+         |)
       """.stripMargin
 
-    spark.sql(insertSql1)
-    spark.sql(insertSql2)
+/*    spark.sql(insertSql1)
+    spark.sql(insertSql2)*/
     spark.sql(insertSql3)
 
-    spark.sql("msck repair table ads.ads_textbook_used_avg_time_consume")
     val selectSql =
       s"""
-        |select product_id,company,province,zxxkc,nj,sum_time_consume,start_action_count,avg_time_consume,data_type,count_date
-        |from ads_textbook_used_avg_time_consume where count_date='${yestStr}'
+        |select * from ads_textbook_used_avg_time_consume
       """.stripMargin
     val readDate = spark.sql(selectSql)
 
     val props = DbProperties.propScp
     var writeDF = readDate.coalesce(5)
     writeDF.write.format("jdbc").
-      mode("append").
+      mode("overwrite").
       jdbc(props.getProperty("url"),"ads_textbook_used_avg_time_consume",props)
 
 
@@ -104,16 +108,15 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
         |    nj           string,
         |    day_count    string,
         |    user_count   string,
-        |    avg_use_day  string
-        |)
-        |    partitioned by (data_type string,count_date string)
-        |    stored as textfile
+        |    avg_use_day  string,
+        |    gid          string
+        |) stored as textfile
       """.stripMargin
     spark.sql(createSql2)
 
 
     //select split(chapter_ids,'\,')[size(split(chapter_ids,'\,'))-1] as chapter_id,rid from (select explode(split(tid1_path,'\\|')) as chapter_ids,rid  from ods.ods_zyk_pep_cn_resource where tid1_path like  '%|%' limit 1);
-    val insertSql11 =
+   /* val insertSql11 =
     s"""
        |insert overwrite table ads.ads_textbook_used_avg_use_day partition(data_type,count_date)
        |select tt.product_id,tt.company,tt.province,tt.zxxkc,'',cast(count(1) as decimal(32,0)) as day_count,cast(count(distinct tt.user_id) as decimal(32,0)) as user_count,cast(count(1)/count(distinct tt.user_id) as decimal(32,0)) as avg_use_day,'zxxkc',${yestStr} from (
@@ -133,35 +136,39 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
          |(select user_id from dwd.dwd_order_related_width where pay_time>='${ysList.get(0)}' and pay_time<='${ysList.get(1)}'  group by user_id) t1 on a.user_id=t1.user_id
          | where count_date>='${ysList.get(0)}' and count_date<='${ysList.get(1)}' and country='中国'
          |group by a.product_id,a.company,a.user_id,count_date,a.province,dws.getEduCode(passive_obj, 'nj')) tt group by tt.nj,tt.province,tt.product_id,tt.company
-      """.stripMargin
+      """.stripMargin*/
 
     val insertSql33 =
       s"""
-         |insert overwrite table ads.ads_textbook_used_avg_use_day partition(data_type,count_date)
-         |select tt.product_id,tt.company,tt.province,tt.zxxkc,tt.nj,cast(count(1) as decimal(32,0)) as day_count,cast(count(distinct tt.user_id) as decimal(32,0)) as user_count,cast(count(1)/count(distinct tt.user_id) as decimal(32,0)) avg_use_day,'zxxkc_nj',${yestStr} from (
+         |insert overwrite table ads.ads_textbook_used_avg_use_day
+         |select tt.product_id,tt.company,tt.province,tt.zxxkc,tt.nj,cast(count(1) as decimal(32,0)) as day_count,
+         |cast(count(distinct tt.user_id) as decimal(32,0)) as user_count,cast(count(1)/count(distinct tt.user_id) as decimal(32,0)) avg_use_day,grouping_id() as gid from (
          |select a.product_id,a.company,a.user_id,dws.getEduCode(passive_obj, 'nj') as nj,dws.getEduCode(passive_obj, 'zxxkc') as zxxkc,a.province,count_date from dws.dws_textbook_used_session a
          |join
          |(select user_id from dwd.dwd_order_related_width where pay_time>='${ysList.get(0)}' and pay_time<='${ysList.get(1)}'  group by user_id) t1 on a.user_id=t1.user_id
          | where count_date>='${ysList.get(0)}' and count_date<='${ysList.get(1)}' and country='中国'
          |group by a.product_id,a.company,a.user_id,count_date,a.province,dws.getEduCode(passive_obj, 'nj'),dws.getEduCode(passive_obj, 'zxxkc')) tt
-         |group by tt.nj,tt.zxxkc,tt.province,tt.product_id,tt.company
+         |group by tt.product_id,tt.company,tt.province,tt.zxxkc,tt.nj
+         |grouping sets(
+         |(tt.product_id,tt.company,tt.province,tt.zxxkc,tt.nj),
+         |(tt.product_id,tt.company,tt.province,tt.zxxkc),
+         |(tt.product_id,tt.company,tt.province,tt.nj)
+         |)
       """.stripMargin
 
-    spark.sql(insertSql11)
-    spark.sql(insertSql22)
+    /*spark.sql(insertSql11)
+    spark.sql(insertSql22)*/
     spark.sql(insertSql33)
 
-    spark.sql("msck repair table ads.ads_textbook_used_avg_use_day")
     val selectSql11 =
       s"""
-         |select product_id,company,province,zxxkc,nj,day_count,user_count,avg_use_day,data_type,count_date
-         |from ads_textbook_used_avg_use_day where count_date='${yestStr}'
+         |select * from ads_textbook_used_avg_use_day
       """.stripMargin
     val readDate11 = spark.sql(selectSql11)
 
     var writeDF11 = readDate11.coalesce(5)
     writeDF11.write.format("jdbc").
-      mode("append").
+      mode("overwrite").
       jdbc(props.getProperty("url"),"ads_textbook_used_avg_use_day",props)
   }
 

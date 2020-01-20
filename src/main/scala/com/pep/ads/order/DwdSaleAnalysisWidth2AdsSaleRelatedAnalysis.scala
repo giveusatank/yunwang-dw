@@ -179,6 +179,25 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
         |) partitioned by (count_date string)  stored as parquet
       """.stripMargin
 
+    var create_10 =
+      """
+        |create table if not exists ads.ads_order_cube(
+        |product_id string,
+        |company string,
+        |user_id string,
+        |passive_obj string,
+        |zxxkc string,
+        |nj string,
+        |country string,
+        |province string,
+        |authorization_way string,
+        |year_month string,
+        |gid string,
+        |user_count string,
+        |sale_count  string
+        |) stored as parquet
+      """.stripMargin
+
     //创建销售相关的Ads层表
     spark.sql(createSql_1)
     spark.sql(createSql_11)
@@ -191,12 +210,13 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
     spark.sql(createSql_7)
     spark.sql(createSql_8)
     spark.sql(createSql_9)
+    spark.sql(create_10)
     spark.sql("drop view if exists dwd_order_temp_width")
     //创建销售宽表视图
     val createTempView =
       s"""
         |create view dwd_order_temp_width as (
-        |select tep1.app_id as product_id,tep1.sale_channel_id as company,tep1.user_id as user_id,tep1.product_id as passive_obj,
+        |select tep1.app_id as product_id, if((tep1.app_id='131'or tep1.app_id='51'),'110000006',tep1.sale_channel_id) as company,tep1.user_id as user_id,tep1.product_id as passive_obj,
         |dws.geteducode(tep1.product_id,'zxxkc') as zxxkc,dws.geteducode(tep1.product_id,'nj') as nj,
         |tep1.quantity as quantity,tep2.country as country,tep2.province as province,tep1.pay_time as pay_time,
         |tep1.authorization_way,tep1.row_status,tep1.row_timestamp from
@@ -232,8 +252,7 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
         |substring(pay_time,1,6) as year_month,passive_obj,dws.geteducode(passive_obj,'zxxkc') as zxxkc,
         |if(dws.geteducode(passive_obj,'nj')='36','26',dws.geteducode(passive_obj,'nj')) as nj,
         |count(distinct(user_id)) as user_count,sum(quantity) as sale_count
-        |from dwd_order_temp_width group by product_id,company,substring(pay_time
-        |,1,6),passive_obj
+        |from dwd_order_temp_width group by product_id,company,substring(pay_time,1,6),passive_obj
       """.stripMargin
     spark.sql(etlSql_2)
     val etlSql_3 =
@@ -312,10 +331,50 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
         |insert overwrite table ads_order_increase
         |select product_id,if((product_id='131'or product_id='51'),'110000006',company) as company,country,
         |province,count(distinct(user_id)) as user_count,sum(quantity) as sale_count,'${yesStr}'
-        |from dwd_order_temp_width where from_unixtime(cast(row_timestamp as bigint) / 1000,'yyyyMMdd')='${yesStr}'
+        |from dwd_order_temp_width where pay_time='${yesStr}'
         |group by product_id,company,country,province
       """.stripMargin
     spark.sql(etlSql_9)
+
+    val etlSql_10 =
+      s"""
+         |insert overwrite table ads.ads_order_cube
+         |select
+         |product_id,
+         |company,
+         |user_id,
+         |passive_obj,
+         |zxxkc,
+         |nj,
+         |country,
+         |province,
+         |authorization_way,
+         |substring(pay_time,1,6) as year_month,
+         |grouping_id() as gid,
+         |count(distinct(user_id)) as user_count,
+         |sum(quantity) as sale_count
+         |from dwd_order_temp_width
+         |group by
+         |product_id,company,user_id,passive_obj,zxxkc,nj,country,province,authorization_way,substring(pay_time,1,6)
+         |grouping sets(
+         |(product_id,company,passive_obj,zxxkc,nj),          -- 0010001111  143
+         |(product_id,company,passive_obj,zxxkc,nj,country,province),          -- 0010000011  131
+         |(product_id,company,zxxkc,nj),                              -- 0011001111  207
+         |(product_id,company,zxxkc,nj,country,province,substring(pay_time,1,6)),          -- 0011000010  194
+         |(product_id,company,passive_obj,authorization_way),       -- 0010111101  189
+         |(product_id,company,passive_obj,substring(pay_time,1,6)), -- 0010111110  190
+         |(product_id,company,zxxkc),                              -- 0011011111  223
+         |(product_id,company,nj),                                 -- 0011101111  239
+         |(product_id,company),                                    -- 0011111111  255
+         |(product_id,company,substring(pay_time,1,6)),            -- 0011111110  254
+         |(product_id,company,country,province),                   -- 0011110011  243
+         |(product_id,company,country,province,substring(pay_time,1,6)), -- 0011110010  242
+         |(product_id,company,zxxkc,nj,substring(pay_time,1,6)),    -- 0011001110   206
+         |(product_id,company,zxxkc,substring(pay_time,1,6)),       -- 0011011110  222
+         |(product_id,company,zxxkc,nj,country,province)          -- 0011000011  195
+         |)
+      """.stripMargin
+    spark.sql(etlSql_10)
 
     //将数仓Ads层数据写入PostgreSql
     val selectSql_1 =
@@ -396,6 +455,12 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
       """.stripMargin
     val selectDF9: Dataset[Row]  = spark.sql(selectSql_9).coalesce(2)
 
+    val select_10 =
+      s"""
+         |select * from ads.ads_order_cube
+      """.stripMargin
+    val selectDF10: Dataset[Row]  = spark.sql(select_10).coalesce(2)
+
 
     /*val props = new java.util.Properties()
     props.setProperty("user","pgadmin")
@@ -446,6 +511,10 @@ object DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis {
     selectDF9.write.
       mode("append").
       jdbc(props.getProperty("url"),"ads_order_increase",props)
+
+    selectDF10.write.
+      mode("overwrite").
+      jdbc(props.getProperty("url"),"ads_order_cube",props)
   }
 
 }

@@ -33,26 +33,23 @@ object DwdJxwResource2AdsJxwResource {
         |jxw_create_time    string,
         |zyk_create_time    string,
         |zywz               string
-        |) partitioned by (count_date string)
-        |stored as textfile
+        |)stored as textfile
       """.stripMargin
     spark.sql(createSql)
-    spark.sql("msck repair table ads.ads_resource_jxw")
 
 
     //创建时间小于20191016为资源加工库元数据
     //select split(chapter_ids,'\,')[size(split(chapter_ids,'\,'))-1] as chapter_id,rid from (select explode(split(tid1_path,'\\|')) as chapter_ids,rid  from ods.ods_zyk_pep_cn_resource where tid1_path like  '%|%' limit 1);
     val insertSql =
       s"""
-         |insert overwrite table ads.ads_resource_jxw partition(count_date)
+         |insert overwrite table ads.ads_resource_jxw
          |select
          |a.tb_id,tb_state,nj,zxxkc, dzwjlx ,dzwjlx_name,ex_zynrlx,ex_zynrlx_name,ex_zycj,s_state,
          |cast(count(1) as decimal(32,0)) count_file,
          |cast(sum(a.file_size) as decimal(32,0)) as sum_size,
          |date_format(a.s_create_time,'yyyyMMdd') as jxw_create_time,
          |if(isnull(b.create_time) or date_format(a.s_create_time,'yyyyMMdd')<'20191016' ,date_format(a.s_create_time,'yyyyMMdd'),from_unixtime(cast(substring(b.create_time, 1, 10) as bigint),'yyyyMMdd')) as zyk_create_time ,
-         |if(isnull(b.create_time) or date_format(a.s_create_time,'yyyyMMdd')<'20191016',1,0) as zywz,
-         |'$yestStr' as count_date
+         |if(isnull(b.create_time) or date_format(a.s_create_time,'yyyyMMdd')<'20191016',1,0) as zywz
          |FROM dwd.dwd_resource_jxw a left join dwd.dwd_resource_zyk b on a.file_md5=b.rel_file_md5 and a.source_pid=b.pid
          |GROUP BY a.tb_id,tb_state,nj,zxxkc, dzwjlx ,dzwjlx_name,ex_zynrlx,ex_zynrlx_name,ex_zycj,s_state,
          |date_format(a.s_create_time,'yyyyMMdd'),
@@ -61,12 +58,9 @@ object DwdJxwResource2AdsJxwResource {
       """.stripMargin
 
     spark.sql(insertSql)
-    spark.sql("msck repair table ads.ads_resource_jxw")
     val selectSql =
       s"""
-        |select tb_id,tb_state,nj,zxxkc, dzwjlx ,dzwjlx_name,ex_zynrlx,ex_zynrlx_name,ex_zycj,s_state,
-        |count_file,sum_size,jxw_create_time,zyk_create_time,zywz,count_date
-        |from ads_resource_jxw where count_date='${yestStr}'
+        |select * from ads_resource_jxw
       """.stripMargin
     val readDate = spark.sql(selectSql)
 
@@ -74,7 +68,7 @@ object DwdJxwResource2AdsJxwResource {
 
     var writeDF = readDate.coalesce(5)
     writeDF.write.format("jdbc").
-      mode("append").
+      mode("overwrite").
       jdbc(props.getProperty("url"),"ads_resource_jxw",props)
 
 

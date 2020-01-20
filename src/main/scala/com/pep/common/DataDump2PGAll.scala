@@ -60,7 +60,7 @@ object DataDump2PGAll {
 
     val querySql_1 =
       s"""
-         |select * from ${tableName} order by count_date desc
+         |select * from ${tableName}
       """.stripMargin
 
     spark.sql(querySql_1).coalesce(5).write.mode(props.getProperty("write_mode")).

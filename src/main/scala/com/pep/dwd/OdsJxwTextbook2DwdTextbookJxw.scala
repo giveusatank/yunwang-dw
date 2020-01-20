@@ -103,7 +103,7 @@ object OdsJxwTextbook2DwdTextbookJxw {
       """
         |select * from (
         |select *, row_number() over (partition by id order by row_timestamp desc ) num from ods.ods_jxw_platform_p_textbook
-        |) where num=1 and row_status='1'
+        |) where num=1 and row_status in ('1','2')
       """.stripMargin
     val readRddDF:DataFrame = spark.sql(selectSql)
 

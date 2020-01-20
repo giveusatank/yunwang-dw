@@ -58,7 +58,8 @@ object OdsProductUser2DwdProductUser {
         |sex string,
         |birthday string,
         |address string,
-        |org_id string,user_type string,
+        |org_id string,
+        |user_type string,
         |first_access_time string,
         |last_access_time string,
         |last_access_ip string,
@@ -86,7 +87,7 @@ object OdsProductUser2DwdProductUser {
         |from
         |(select user_id_ex,product_id_ex,*,row_number() over(partition by product_id_ex,company,user_id_ex order by row_timestamp desc) as rank
         |from (select if(instr(user_id,'_')!=0,split(user_id,'_')[1],user_id) as user_id_ex,if(company='pep_click','1214',product_id) as product_id_ex,* from ods.ods_product_user) t0
-        |) as t1 where t1.rank=1 and t1.row_status='1'
+        |) as t1 where t1.rank=1 and t1.row_status in ('1','2')
       """.stripMargin
 
     spark.sql(etlSql)

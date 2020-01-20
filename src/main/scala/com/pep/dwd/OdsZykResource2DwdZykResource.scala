@@ -147,15 +147,15 @@ object OdsZykResource2DwdZykResource {
       """
         |select t.*,t3.chapter_id as chapter_id,if(!isnull(t3.chapter_id),dws.geteducode(t3.chapter_id,'educode'),'') as tb_id from
         |(select a.*,c.file_md5 as rel_file_md5,c.file_url_view,c.file_url,c.file_size,c.file_oname,c.file_name,c.file_extension,d.pid
-        |from (select * from (select *, row_number() over (partition by rid order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_resource) where num=1 and row_status='1') a
-        | join (select * from (select *, row_number() over (partition by attach_id order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_attach) where num=1 and row_status='1') b on a.rid=b.rid
-        | join (select * from (select *, row_number() over (partition by file_md5 order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_file) where num=1 and row_status='1') c on b.file_md5=c.file_md5
-        | left join (select * from (select *, row_number() over (partition by pid order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_resource_push) where num=1 and row_status='1') d on b.attach_id=d.attach_id
+        |from (select * from (select *, row_number() over (partition by rid order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_resource) where num=1 and row_status in ('1','2')) a
+        | join (select * from (select *, row_number() over (partition by attach_id order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_attach) where num=1 and row_status in ('1','2')) b on a.rid=b.rid
+        | join (select * from (select *, row_number() over (partition by file_md5 order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_file) where num=1 and row_status in ('1','2')) c on b.file_md5=c.file_md5
+        | left join (select * from (select *, row_number() over (partition by pid order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_resource_push) where num=1 and row_status in ('1','2')) d on b.attach_id=d.attach_id
         | union all
         |select aa.*,bb.file_md5 as rel_file_md5,bb.file_url_view,bb.file_url,bb.file_size,bb.file_oname,bb.file_name,bb.file_extension,dd.pid
-        |from (select * from (select *, row_number() over (partition by rid order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_resource) where num=1 and row_status='1') aa
-        | join (select * from (select *, row_number() over (partition by file_md5 order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_file) where num=1 and row_status='1') bb on aa.file_md5=bb.file_md5
-        | left join (select * from (select *, row_number() over (partition by pid order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_resource_push) where num=1 and row_status='1') dd on aa.rid=dd.rid
+        |from (select * from (select *, row_number() over (partition by rid order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_resource) where num=1 and row_status in ('1','2')) aa
+        | join (select * from (select *, row_number() over (partition by file_md5 order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_file) where num=1 and row_status in ('1','2')) bb on aa.file_md5=bb.file_md5
+        | left join (select * from (select *, row_number() over (partition by pid order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_resource_push) where num=1 and row_status in ('1','2')) dd on aa.rid=dd.rid
         | )  t join
         |(select split(chapter_ids,'\\,')[size(split(chapter_ids,'\\,'))-1] as chapter_id,rid from (select explode(split(tid1_path,'\\\\|')) as chapter_ids,rid  from ods.ods_zyk_pep_cn_resource )) t2
         |on t.rid=t2.rid

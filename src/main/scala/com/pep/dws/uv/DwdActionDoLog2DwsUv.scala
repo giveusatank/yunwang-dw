@@ -58,11 +58,11 @@ object DwdActionDoLog2DwsUv {
          |       min(start_time) as first_access_time,
          |       max(start_time) as last_access_time,
          |       count(1)        as action_count,
-         |       round(dws.productTimeUsed(str_to_map(concat_ws(",", collect_set(concat_ws(':', cast(start_time as string), cast(action_title as string))))),900,0)/1000,0)  as launch_used_time,
+         |       round(dws.productTimeUsed(str_to_map(concat_ws(",", collect_set(concat_ws(':', cast(start_time as string), cast(action_title as string))))),900,0)/1000)  as launch_used_time,
          |       dws.productTimeUsed(str_to_map(concat_ws(",", collect_set(concat_ws(':', cast(start_time as string), cast(action_title as string))))),900,2)  as launch_count,
          |       put_date
          |from dwd.action_do_log
-         |where put_date = '$yestStr' and nvl(product_id,'')!='' and nvl(device_id,'')!='' and not(action_title like 'sys_1%' or action_title like 'sys_4%')
+         |where put_date = '$yestStr' and country='中国' and nvl(product_id,'')!='' and nvl(device_id,'')!='' and not(action_title like 'sys_1%' or action_title like 'sys_4%')
          |group by product_id, remote_addr, dws.yunwangDateFormat('company',company),
          |country, province, city, location,region, active_user, device_id, group_id, put_date
      """.stripMargin

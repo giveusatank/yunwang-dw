@@ -18,34 +18,22 @@ object MysqlJxwPlatfromResource2DataWarehouse {
     val props = new java.util.Properties
     val tableName = "p_resource"
     props.setProperty("user","root")
-    props.setProperty("password","123456")
-    props.setProperty("url","jdbc:mysql://192.168.186.36:3306/jxw_platform")
+    props.setProperty("password","rjszgs2019")
+    props.setProperty("url","jdbc:mysql://172.30.0.9:3306/jxw_platform")
 
     //定义SparkSQL读取Mysql的线程数量，以及线程的读取数据量
     val predicates = Array(
-      "2017-08",
-      "2017-09",
-      "2017-10",
-      "2017-11",
-      "2018-01",
-      "2018-02",
-      "2018-03",
-      "2018-04",
-      "2018-05",
-      "2018-06",
-      "2018-07",
-      "2018-08",
-      "2018-09",
-      "2018-10",
-      "2018-11",
-      "2018-12",
-      "2019-01",
-      "2019-02",
-      "2019-03",
-      "2019-05",
-      "2019-06",
-      "2019-07"
-    ).map( item => s"substring(s_create_time,1,7)='${item}'")
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ).map(x => s"mod(id,10)=${x}")
 
     val mysqlReadDF: DataFrame = spark.read.format("jdbc").jdbc(props.getProperty("url"),tableName,predicates,props)
 

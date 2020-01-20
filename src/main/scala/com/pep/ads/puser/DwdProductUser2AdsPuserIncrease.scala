@@ -74,7 +74,7 @@ object DwdProductUser2AdsPuserIncrease {
          |(select ress.pid,ress.com,ress.rtt,ress.user_id,ress.country,ress.province,ress.city from
          |(select temp.user_id,temp.pid,temp.com,temp.rtt,temp.country,temp.province,temp.city,
          |row_number() over(partition by temp.user_id,temp.pid,temp.com order by temp.cou desc) as rkk from
-         |(select t1.user_id,t1.product_id as pid,t1.company as com,from_unixtime(cast(t1.row_timestamp as bigint) / 1000,'yyyyMMdd') as rtt,
+         |(select t1.user_id,t1.product_id as pid,t1.company as com,from_unixtime(cast(t1.first_access_time as bigint) / 1000,'yyyyMMdd') as rtt,
          |t2.country,t2.province,t2.city,count(1) over(partition by t1.product_id,t1.company,t1.user_id,t2.country,t2.province,
          |t2.city) as cou from
          |(select * from dwd.dwd_product_user where from_unixtime(cast(first_access_time as bigint) / 1000,'yyyyMMdd')='${yesStr}')
@@ -157,8 +157,8 @@ object DwdProductUser2AdsPuserIncrease {
          |  ) t left join (
          |    select b.product_id,count(DISTINCT (b.user_id)) as new_reg,b.company,a.province from (-- 新用户注册数
          |    select aa.product_id,aa.company,aa.active_user,aa.province from dws.dws_uv_total aa join ( -- 采集注册用户中设备当日首次出现为新用户ID
-         |    select device_id,product_id,company  from dws.dws_uv_increase where nvl(active_user,'')!='' and count_date='$yestStr' group by device_id,product_id,company -- 新用户表中的注册用户（新注册、游客注册）的设备ID
-         |    ) bb on aa.device_id=bb.device_id and from_unixtime(cast(substring(aa.first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' and nvl(aa.active_user,'')!='' and aa.country='中国'-- 筛选出当天出现的设备
+         |      select device_id,product_id,company  from dws.dws_uv_increase where nvl(active_user,'')!='' and count_date='$yestStr' group by device_id,product_id,company -- 新用户表中的注册用户（新用户注册、老用户注册）的设备ID
+         |    ) bb on aa.device_id=bb.device_id and from_unixtime(cast(substring(aa.first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' and nvl(aa.active_user,'')!='' and aa.country='中国'-- 筛选出当天出现的设备，排除老用户注册
          |    ) a left join (
          |    select u1.user_id as user_id,u1.product_id,u1.company,u2.province from dwd.dwd_product_user u1 left join dwd.dwd_user_area u2 on u1.product_id=u2.product_id and u1.company=u2.company and u1.user_id=u2.active_user where -- 当天注册用户
          |    from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd')='$yestStr' group by u1.user_id,u1.product_id,u1.company,u2.province

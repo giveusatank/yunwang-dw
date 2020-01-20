@@ -70,6 +70,7 @@ object DwdActionDoLog2DwsTextBookTotal {
        |where put_date = '${yesStr}'
        |  and action_title in ('dd100001', 'dd100002', 'jx200001', 'jx200184','jx200175','jx200016')
        |  and group_id != ''
+       |  and country='中国'
        |  and not (active_user = '' and device_id = 'null')
        |  and not (active_user = '' and device_id is null)
        |  and not (active_user = '' and device_id = '')
@@ -108,7 +109,6 @@ object DwdActionDoLog2DwsTextBookTotal {
         |) partitioned by (count_date bigint) stored as parquet
       """.stripMargin
     spark.sql(sql)
-    spark.sql(s"alter table dws.dws_textbook_used_daily drop if exists partition(count_date=${yesStr})")
     //将dws_textbook_used_session表中的数据清洗到dws_textbook_used_daily表
     val sql1 =
       s"""

@@ -116,7 +116,7 @@ object OdsActionLogOt2DwdActionDoLog {
          |                   passive_type,
          |                   from_prod,
          |                   from_pos,
-         |                   company,
+         |                   if(company=='c1860a61705f36538055c0955c327079','110000006' ,company) as company,
          |                   action_title,
          |                   action_type,
          |                   request,

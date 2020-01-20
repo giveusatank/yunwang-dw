@@ -66,7 +66,7 @@ object DwsUvTotal2DwdUserArea {
       s"""
         |insert overwrite table dwd.dwd_user_area
         |select product_id,company,remote_addr,country,province,city,
-        |location,active_user,count_date from dws.dws_uv_total where nvl(active_user,'')!=''
+        |location,active_user,count_date from dws.dws_uv_total where nvl(active_user,'')!='' and country='中国'
       """.stripMargin
 
     println(etlSql)
