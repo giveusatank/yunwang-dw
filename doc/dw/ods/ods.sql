@@ -27,7 +27,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS original_action_log
     result_flag   int,
     result        STRING
 )
-    partitioned by (put_date int)
+    partitioned by (put_date STRING,idx string)
     ROW FORMAT DELIMITED FIELDS TERMINATED BY '~'
     STORED AS TEXTFILE
     LOCATION '/pep_cloud/ulog/ods/original_action_log';
@@ -97,7 +97,7 @@ group_id STRING,
 result_flag int,
 result STRING
 )
-partitioned by (put_date int)
+partitioned by (put_date int,idx string)
 ROW FORMAT DELIMITED FIELDS TERMINATED BY '~'
 STORED AS TEXTFILE
 LOCATION '/pep_cloud/ulog/ods/action_log';
@@ -138,7 +138,7 @@ CREATE TABLE `action_do_log`
     `result`        string,
     `num`           int
 )
-    partitioned by (put_date int)
+    partitioned by (put_date string)
     STORED AS parquet;
 
 CREATE TABLE `action_do_log_dc`
