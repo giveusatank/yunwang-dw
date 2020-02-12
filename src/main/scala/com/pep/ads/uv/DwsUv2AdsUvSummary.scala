@@ -83,8 +83,6 @@ object DwsUv2AdsUvSummary {
     cal.setTime(new Date())
     cal.add(Calendar.DATE, -180)
     val hyTimestamp = cal.getTime.getTime
-    cal.add(Calendar.DATE, 150)
-    val hmTimestamp = cal.getTime.getTime
     spark.sql("use ads")
     val createSql =
       """
@@ -131,32 +129,7 @@ object DwsUv2AdsUvSummary {
          |                count(1)           as user_count,
          |                sum(action_count)  as action_count,
          |                sum(session_count) as session_count
-         |         from dws.dws_uv_total where last_access_time > '$hyTimestamp' and product_id not in ('300','301')
-         |         group by product_id, company, country, province, city, location, device_id)
-         |group by product_id, company, country, province, city, location
-         |union
-         |select product_id,
-         |       company,
-         |       country,
-         |       province,
-         |       city,
-         |       location,
-         |       count(user_count)  as user_count,
-         |       sum(action_count)  as action_count,
-         |       sum(session_count) as session_count,
-         |       '$yestStr',
-         |       '$yestStr'
-         |from (
-         |         select product_id,
-         |                company,
-         |                country,
-         |                province,
-         |                city,
-         |                location,
-         |                count(1)           as user_count,
-         |                sum(action_count)  as action_count,
-         |                sum(session_count) as session_count
-         |         from dws.dws_uv_total where last_access_time > '$hmTimestamp' and product_id in ('300','301')
+         |         from dws.dws_uv_total where last_access_time > '$hyTimestamp'
          |         group by product_id, company, country, province, city, location, device_id)
          |group by product_id, company, country, province, city, location
       """.stripMargin
@@ -243,7 +216,7 @@ object DwsUv2AdsUvSummary {
     val beginWeekTs = cal.getTime.getTime
 
     cal.setTime(format.parse(now))
-    cal.add(Calendar.DATE,-1)
+    cal.add(Calendar.DATE, -1)
     val todayStr = format.format(cal.getTime)
 
     spark.sql("use ads")
@@ -253,7 +226,7 @@ object DwsUv2AdsUvSummary {
       s"""
          |insert overwrite table ads_uv_area_until_week_month partition(count_date='${todayStr}')
          |select product_id,company,country,province,count(distinct(temp1.device_id))
-         |as act_uv,'${week_type}',dws.dateUtilUDF('week',unix_timestamp('${todayStr}','yyyyMMdd'))
+         |as act_uv,'${week_type}',dws.dateUtilUDF('week',unix_timestamp(count_date,'yyyyMMdd'))
          |from (select product_id,company,country,province,device_id from dws.dws_uv_total where
          |(last_access_time>='${beginWeekTs}' and last_access_time<='${endWeekTs}' ) or
          |(first_access_time>='${beginWeekTs}' and first_access_time<='${endWeekTs}') )
@@ -299,7 +272,7 @@ object DwsUv2AdsUvSummary {
     val beginMonthTs = cal.getTime.getTime
 
     cal.setTime(format.parse(now))
-    cal.add(Calendar.DATE,-1)
+    cal.add(Calendar.DATE, -1)
     val todayStr = format.format(cal.getTime)
 
     println(todayStr)
@@ -310,9 +283,9 @@ object DwsUv2AdsUvSummary {
 
     val insertSql_1 =
       s"""
-         |insert into table ads_uv_area_until_week_month partition(count_date='${todayStr}')
+         |insert overwrite table ads_uv_area_until_week_month partition(count_date='${todayStr}')
          |select product_id,company,country,province,count(distinct(temp1.device_id))
-         |as act_uv,'${month_type}',concat(substring('${todayStr}',1,4),"-",substring('${todayStr}',5,2))
+         |as act_uv,'${month_type}',concat(substring(count_date,1,4),"-",substring(count_date,5,2))
          |from (select product_id,company,country,province,device_id from dws.dws_uv_total where
          |(last_access_time>='${beginMonthTs}' and last_access_time<='${endMonthTs}' ) or
          |(first_access_time>='${beginMonthTs}' and first_access_time<='${endMonthTs}') )
@@ -322,7 +295,7 @@ object DwsUv2AdsUvSummary {
 
     val insertSql_2 =
       s"""
-         |insert into table ads_uv_incr_area_until_week_month partition(count_date='${todayStr}')
+         |insert overwrite table ads_uv_incr_area_until_week_month partition(count_date='${todayStr}')
          |select temp1.product_id,temp1.company,temp1.country,temp1.province,count(distinct(temp1.device_id))
          |as inc_uv,'${month_type}' from (select product_id,company,country,province,device_id from dws.dws_uv_total where
          |first_access_time>='${beginMonthTs}' and first_access_time<='${endMonthTs}')
@@ -333,7 +306,7 @@ object DwsUv2AdsUvSummary {
 
     val insertSql_3 =
       s"""
-         |insert into table ads_puser_area_until_week_month partition(count_date='${todayStr}')
+         |insert overwrite table ads_puser_area_until_week_month partition(count_date='${todayStr}')
          |select product_id,company,country,province,count(distinct(temp1.device_id))
          |as act_uv,'${month_type}' from (select product_id,company,country,province,device_id from dws.dws_uv_total where
          |((last_access_time>='${beginMonthTs}' and last_access_time<='${endMonthTs}' ) or
@@ -372,18 +345,18 @@ object DwsUv2AdsUvSummary {
          |(select product_id as pp2,company as ddd,country,province,'today',count(distinct(active_user)) as uv
          |from dws.dws_uv_total where last_access_time>='${last_day_st}'
          |and nvl(active_user,'')!='' group by product_id,company,country,province)
-      """.stripMargin
+    """.stripMargin
     spark.sql(etlSql)
 
   }
 
   //4 将Ads层UV相关数据写入PostgreSQL
-  def writeAdsUvRelated2PostgreSQL(spark: SparkSession, yesStr: String,now :String): Unit = {
+  def writeAdsUvRelated2PostgreSQL(spark: SparkSession, yesStr: String, now: String): Unit = {
 
     val format = new SimpleDateFormat("yyyyMMdd")
     val cal = Calendar.getInstance()
     cal.setTime(format.parse(now))
-    cal.add(Calendar.DATE,-1)
+    cal.add(Calendar.DATE, -1)
     val todayStr = format.format(cal.getTime)
 
     val props = DbProperties.propScp
@@ -442,8 +415,8 @@ object DwsUv2AdsUvSummary {
 
     val querySql_6 =
       s"""
-         |select product_id,company,country,province,user_count,row_type,count_date
-         |from ads.ads_uv_area_until_week_month where count_date='${todayStr}'
+         |select product_id,company,country,province,user_count,row_type,time_type,
+         |count_date from ads.ads_uv_area_until_week_month
       """.stripMargin
 
     spark.sql(querySql_6).coalesce(20).write.mode(props.getProperty("write_mode")).
@@ -540,7 +513,7 @@ object DwsUv2AdsUvSummary {
     writeDwsUvTotal2AdsActiveRegUser(spark, todayStr, lastMonth, lastHalfYear)
 
     //4 将Ads层UV相关数据写入PostgreSQL
-    writeAdsUvRelated2PostgreSQL(spark ,todayStr,now)
+    writeAdsUvRelated2PostgreSQL(spark, todayStr, now)
 
   }
 
@@ -579,7 +552,8 @@ object DwsUv2AdsUvSummary {
         |country string,
         |province string,
         |user_count string,
-        |row_type string
+        |row_type string,
+        |time_type string
         |) partitioned by (count_date string) stored as parquet
       """.stripMargin
     spark.sql(createSql_1)
