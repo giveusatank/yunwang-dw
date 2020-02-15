@@ -144,6 +144,71 @@ object DwsUv2AdsUvSummary {
     * @param spark
     * @param yestStr
     */
+  def dwsUvTotal2AdsUvTotalYq(spark: SparkSession, yestStr: String): Unit = {
+    val cal = Calendar.getInstance
+    cal.setTime(new Date())
+    cal.add(Calendar.DATE, -180)
+    val hyTimestamp = cal.getTime.getTime
+    spark.sql("use ads")
+    val createSql =
+      """
+        |create table if not exists ads_uv_total_yq
+        |(
+        |    product_id    string,
+        |    company       string,
+        |    country       string,
+        |    province      string,
+        |    city          string,
+        |    location      string,
+        |    user_count    bigint,
+        |    action_count  bigint,
+        |    session_count bigint,
+        |    mark_date     string
+        |)
+        |    partitioned by (count_date int)
+        |    stored as textfile
+      """.stripMargin
+
+    spark.sql(createSql)
+    val insertSql =
+      s"""
+         |insert overwrite table ads.ads_uv_total_yq partition(count_date)
+         |select product_id,
+         |       company,
+         |       country,
+         |       province,
+         |       city,
+         |       location,
+         |       count(user_count)  as user_count,
+         |       sum(action_count)  as action_count,
+         |       sum(session_count) as session_count,
+         |       '$yestStr',
+         |       '$yestStr'
+         |from (
+         |         select product_id,
+         |                company,
+         |                country,
+         |                province,
+         |                city,
+         |                location,
+         |                count(1)           as user_count,
+         |                sum(action_count)  as action_count,
+         |                sum(session_count) as session_count
+         |         from dws.dws_uv_total where last_access_time > '1579363200000'
+         |         group by product_id, company, country, province, city, location, device_id)
+         |group by product_id, company, country, province, city, location
+      """.stripMargin
+
+    spark.sql(insertSql)
+
+  }
+
+  /**
+    * ads 每日uv pv统计
+    *
+    * @param spark
+    * @param yestStr
+    */
   def dwsUvIncrease2AdsUvIncrease(spark: SparkSession, yestStr: String): Unit = {
     spark.sql("use ads")
     val createSql =
@@ -367,6 +432,8 @@ object DwsUv2AdsUvSummary {
     props.setProperty("tableName_6", "ads_uv_area_until_week_month")
     props.setProperty("tableName_7", "ads_active_reg_user")
     props.setProperty("tableName_8", "ads_puser_area_until_week_month")
+    props.setProperty("tableName_9", "ads_uv_total_yq")
+
     props.setProperty("write_mode", "Append")
 
 
@@ -400,8 +467,15 @@ object DwsUv2AdsUvSummary {
          |session_count,count_date as mark_date from ads.ads_uv_total where count_date='${yesStr}'
       """.stripMargin
 
-    spark.sql(querySql_3).coalesce(20).write.mode(props.getProperty("write_mode")).
-      jdbc(props.getProperty("url"), props.getProperty("tableName_3"), props)
+    //ads_uv_total
+    val querySql_33 =
+      s"""
+         |select product_id,company,country,province,city,location,user_count,action_count,
+         |session_count,count_date as mark_date from ads.ads_uv_total_yq where count_date='${yesStr}'
+      """.stripMargin
+
+    spark.sql(querySql_33).coalesce(20).write.mode(props.getProperty("write_mode")).
+      jdbc(props.getProperty("url"), props.getProperty("tableName_8"), props)
 
 
     val querySql_5 =
