@@ -189,7 +189,7 @@ object DwsUv2AdsUvSummary {
          |                company,
          |                country,
          |                province,
-         |                city,
+         |                city as city,
          |                location,
          |                count(1)           as user_count,
          |                sum(action_count)  as action_count,
@@ -428,11 +428,11 @@ object DwsUv2AdsUvSummary {
     props.setProperty("tableName_1", "ads_uv_daily")
     props.setProperty("tableName_2", "ads_uv_increase")
     props.setProperty("tableName_3", "ads_uv_total")
+    props.setProperty("tableName_33", "ads_uv_total_yq")
     props.setProperty("tableName_5", "ads_uv_incr_area_until_week_month")
     props.setProperty("tableName_6", "ads_uv_area_until_week_month")
     props.setProperty("tableName_7", "ads_active_reg_user")
     props.setProperty("tableName_8", "ads_puser_area_until_week_month")
-    props.setProperty("tableName_9", "ads_uv_total_yq")
 
     props.setProperty("write_mode", "Append")
 
@@ -466,6 +466,8 @@ object DwsUv2AdsUvSummary {
          |select product_id,company,country,province,city,location,user_count,action_count,
          |session_count,count_date as mark_date from ads.ads_uv_total where count_date='${yesStr}'
       """.stripMargin
+    spark.sql(querySql_3).coalesce(20).write.mode(props.getProperty("write_mode")).
+      jdbc(props.getProperty("url"), props.getProperty("tableName_3"), props)
 
     //ads_uv_total
     val querySql_33 =
@@ -475,7 +477,7 @@ object DwsUv2AdsUvSummary {
       """.stripMargin
 
     spark.sql(querySql_33).coalesce(20).write.mode(props.getProperty("write_mode")).
-      jdbc(props.getProperty("url"), props.getProperty("tableName_8"), props)
+      jdbc(props.getProperty("url"), props.getProperty("tableName_33"), props)
 
 
     val querySql_5 =
@@ -573,6 +575,8 @@ object DwsUv2AdsUvSummary {
 
     //2 历史累计的增量
     dwsUvTotal2AdsUvTotal(spark, todayStr)
+    //2 疫情
+    dwsUvTotal2AdsUvTotalYq(spark, todayStr)
 
     //3 每日新增统计
     dwsUvIncrease2AdsUvIncrease(spark, todayStr)
