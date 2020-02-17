@@ -292,7 +292,7 @@ object DwsUv2AdsUvSummary {
          |insert overwrite table ads_uv_area_until_week_month partition(count_date='${todayStr}')
          |select product_id,company,country,province,count(distinct(temp1.device_id))
          |as act_uv,'${week_type}',dws.dateUtilUDF('week',unix_timestamp(count_date,'yyyyMMdd'))
-         |from (select product_id,company,country,province,device_id from dws.dws_uv_total where
+         |from (select product_id,company,country,province,device_id,count_date from dws.dws_uv_total where
          |(last_access_time>='${beginWeekTs}' and last_access_time<='${endWeekTs}' ) or
          |(first_access_time>='${beginWeekTs}' and first_access_time<='${endWeekTs}') )
          |as temp1 group by product_id,company,country,province
