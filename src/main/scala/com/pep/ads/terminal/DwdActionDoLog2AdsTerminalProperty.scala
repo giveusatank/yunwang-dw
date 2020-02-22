@@ -86,7 +86,7 @@ object DwdActionDoLog2AdsTerminalProperty {
         |upper(if(nvl(str_to_map(os)['net-type'],'')!='',str_to_map(os)['net-type'],
         |if(nvl(str_to_map(os)['c-net-type'],'')!='',dws.yunwangdateformat('connect',str_to_map(os)['c-net-type']),NULL))) as connect_c
         |,grouping_id() as gid,count(distinct(device_id)) as cou
-        |from dwd.action_do_log where put_date<='${yesStr}' and put_date>='${yesMon}' and log_version='2'
+        |from dwd.action_do_log where put_date='${yesStr}' and log_version='2'
         |group by product_id,company,country,province,dpi_c,brand_c,machine_c,os_c,operator_c,connect_c grouping sets((product_id,company,country,province,dpi_c),
         |(product_id,company,country,province,brand_c),
         |(product_id,company,country,province,machine_c),
