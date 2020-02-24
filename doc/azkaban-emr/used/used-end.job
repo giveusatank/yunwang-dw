@@ -1,0 +1,5 @@
+#used-end.job
+type=command
+command=echo "used-end"
+dependencies=run-DwsUvSessionDaily2AdsUsed
+working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

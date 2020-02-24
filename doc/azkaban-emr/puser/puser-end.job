@@ -1,0 +1,5 @@
+#puser-end.job
+type=command
+command=echo "puser-end"
+dependencies=run-DwdProductUser2AdsPuserIncrease,run-DwdProductUser2AdsPuserTotal
+working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
