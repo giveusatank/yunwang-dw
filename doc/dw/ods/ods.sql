@@ -32,6 +32,41 @@ CREATE EXTERNAL TABLE IF NOT EXISTS original_action_log
     STORED AS TEXTFILE
     LOCATION '/pep_cloud/ulog/ods/original_action_log';
 
+
+    CREATE EXTERNAL TABLE IF NOT EXISTS original_action_log_web
+(
+    remote_addr   STRING,
+    request_time  STRING,
+    log_version   STRING,
+    start_time    bigint,
+    end_time      bigint,
+    region        STRING,
+    product_id    STRING,
+    hardware      STRING,
+    os            STRING,
+    soft          STRING,
+    active_user   STRING,
+    active_org    STRING,
+    active_type   int,
+    passive_obj   STRING,
+    passive_type  STRING,
+    from_prod     STRING,
+    from_pos      STRING,
+    company       string,
+    action_title  STRING,
+    action_type   int,
+    request       STRING,
+    request_param STRING,
+    group_type    int,
+    group_id      STRING,
+    result_flag   int,
+    result        STRING
+)
+    partitioned by (put_date STRING,idx string)
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY '~'
+    STORED AS TEXTFILE
+    LOCATION '/pep_cloud/ulog/ods/original_action_log_web';
+
 CREATE EXTERNAL TABLE IF NOT EXISTS action_log_ot
 (
     id            STRING,
