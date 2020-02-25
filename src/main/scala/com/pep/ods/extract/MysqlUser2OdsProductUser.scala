@@ -15,11 +15,11 @@ object MysqlUser2OdsProductUser {
   def main(args: Array[String]): Unit = {
     MappingRuleInit.init(args(0))
     val conf = new SparkConf().setAppName("RUN-MysqlUser2OdsProductUser")
-    val sc = new SparkContext(conf)
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     val props = new java.util.Properties
     var mappingRule: MappingRuleConfig = MappingRuleInit.mappingRuleConfig
     if (mappingRule == null) {
+      println("tttttttttttttttttttttttt")
       return
     }
     val tableName = mappingRule.getTable_name

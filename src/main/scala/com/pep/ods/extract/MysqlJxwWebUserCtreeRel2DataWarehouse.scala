@@ -19,10 +19,10 @@ object MysqlJxwWebUserCtreeRel2DataWarehouse {
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
 
     val prop = new java.util.Properties()
-    prop.setProperty("url","jdbc:mysql://172.30.0.9:3306/jxw_web_db")
-    prop.setProperty("user","root")
-    prop.setProperty("password","rjszgs2019")
-    prop.setProperty("tableName","a_user_ctree_rel")
+    prop.setProperty("user","pdadmin")
+    prop.setProperty("password","R8$7Zo319%0tUi")
+    prop.setProperty("url","jdbc:mysql://rm-2zefoq89s74i5bfal.mysql.rds.aliyuncs.com:3306/yw_bus")
+    prop.setProperty("tableName","jxw_web_a_user_ctree_rel")
 
     val predicateArray = Array(
       0,
@@ -52,7 +52,7 @@ object MysqlJxwWebUserCtreeRel2DataWarehouse {
 
     val createSql =
       s"""
-         |create external table if not exists ods_jxw_platform_user_ctree_rel(
+         |create external table if not exists ods.ods_jxw_platform_user_ctree_rel(
          |id string,
          |user_id string,
          |user_name string,
@@ -91,10 +91,10 @@ object MysqlJxwWebUserCtreeRel2DataWarehouse {
          |) partitioned by (count_date string) row format serde 'org.apache.hive.hcatalog.data.JsonSerDe'
          |stored as textfile location '/pep_cloud/business/ods/ods_jxw_platform_user_ctree_rel'
       """.stripMargin
-
     spark.sql("use ods")
+    spark.sql(createSql)
     val insertSql =
-      s"""
+    s"""
          |insert into table ods_jxw_platform_user_ctree_rel partition (count_date='20190000')
          |select * from insert_user_ctree_rel
       """.stripMargin

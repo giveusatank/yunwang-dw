@@ -24,9 +24,9 @@ object MysqlZykPepCnResource2DataWarehouse {
     val zyk_attach = "zyk_attach"
     val zyk_tree = "zyk_tree"
     val zyk_resource_push = "zyk_resource_push"
-    props.setProperty("user","root")
-    props.setProperty("password","123456")
-    props.setProperty("url","jdbc:mysql://192.168.186.36:3306/zyk_pep_cn")
+    props.setProperty("user","pdadmin")
+    props.setProperty("password","R8$7Zo319%0tUi")
+    props.setProperty("url","jdbc:mysql://rm-2zefoq89s74i5bfal.mysql.rds.aliyuncs.com:3306/yw_bus")
     val default_row_timestamp = System.currentTimeMillis()
     val default_row_status = "1"
 
@@ -55,7 +55,7 @@ object MysqlZykPepCnResource2DataWarehouse {
          |select *,'$default_row_timestamp' as row_timestamp,'$default_row_status' as row_status from zyk_resource_tmp
        """.stripMargin
     val etlDF = spark.sql(etlSql1)
-    val write_path1 = "hdfs://ns/pep_cloud/business/ods/ods_zyk_pep_cn_resource/put_date=20190000"
+    val write_path1 = "hdfs://emr-cluster/pep_cloud/business/ods/ods_zyk_pep_cn_resource/put_date=20190000"
     val writeDF = etlDF.coalesce(20)
     writeDF.write.json(write_path1)
 
@@ -88,7 +88,7 @@ object MysqlZykPepCnResource2DataWarehouse {
        """.stripMargin
 
     val etlDF2 = spark.sql(etlSql2)
-    val write_path2 = "hdfs://ns/pep_cloud/business/ods/ods_zyk_pep_cn_file/put_date=20190000"
+    val write_path2 = "hdfs://emr-cluster/pep_cloud/business/ods/ods_zyk_pep_cn_file/put_date=20190000"
     val writeDF2 = etlDF2.coalesce(20)
     writeDF2.write.json(write_path2)
 
@@ -121,7 +121,7 @@ object MysqlZykPepCnResource2DataWarehouse {
          |select *,'$default_row_timestamp' as row_timestamp,'$default_row_status' as row_status from zyk_attach_tmp
        """.stripMargin
     val etlDF3 = spark.sql(etlSql3)
-    val write_path3 = "hdfs://ns/pep_cloud/business/ods/ods_zyk_pep_cn_attach/put_date=20190000"
+    val write_path3 = "hdfs://emr-cluster/pep_cloud/business/ods/ods_zyk_pep_cn_attach/put_date=20190000"
     val writeDF3 = etlDF3.coalesce(20)
     writeDF3.write.json(write_path3)
 
@@ -154,7 +154,7 @@ object MysqlZykPepCnResource2DataWarehouse {
          |select *,'$default_row_timestamp' as row_timestamp,'$default_row_status' as row_status from zyk_tree_tmp
        """.stripMargin
     val etlDF4 = spark.sql(etlSql4)
-    val write_path4 = "hdfs://ns/pep_cloud/business/ods/ods_zyk_pep_cn_tree/put_date=20190000"
+    val write_path4 = "hdfs://emr-cluster/pep_cloud/business/ods/ods_zyk_pep_cn_tree/put_date=20190000"
     val writeDF4 = etlDF4.coalesce(20)
     writeDF4.write.json(write_path4)
 
@@ -186,7 +186,7 @@ object MysqlZykPepCnResource2DataWarehouse {
          |select *,'$default_row_timestamp' as row_timestamp,'$default_row_status' as row_status from zyk_push_tmp
        """.stripMargin
     val etlDF5 = spark.sql(etlSql5)
-    val write_path5 = "hdfs://ns/pep_cloud/business/ods/ods_zyk_pep_cn_resource_push/put_date=20190000"
+    val write_path5 = "hdfs://emr-cluster/pep_cloud/business/ods/ods_zyk_pep_cn_resource_push/put_date=20190000"
     val writeDF5 = etlDF5.coalesce(20)
     writeDF5.write.json(write_path5)
 

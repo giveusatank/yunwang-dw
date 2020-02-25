@@ -1,12 +1,12 @@
 {
-  "db_user":"root",
-  "db_password":"rjszgs2019",
-  "db_url":"jdbc:mysql://172.30.0.9:3306/jx_click",
-  "table_name":"p_user",
+  "db_user":"pdadmin",
+  "db_password":"R8$7Zo319%0tUi",
+  "db_url":"jdbc:mysql://rm-2zefoq89s74i5bfal.mysql.rds.aliyuncs.com:3306/yw_bus",
+  "table_name":"jx_click_pep_a_user",
   "mapping":
       {
         "user_id"           :"user_id",
-        "product_id"        :"'121301'",
+        "product_id"        :"'1214'",
         "company"           :"'pep_click'",
         "reg_name"          :"reg_name",
         "nick_name"         :"name",

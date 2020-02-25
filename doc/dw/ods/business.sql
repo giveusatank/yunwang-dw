@@ -36,3 +36,24 @@ STORED AS TEXTFILE
 LOCATION '/pep_cloud/business/ods/user_id';
 
 
+CREATE TABLE `ods_order_detail`(`id` string COMMENT 'from deserializer', `app_id` string COMMENT 'from deserializer', `app_order_id` string COMMENT 'from deserializer', `product_id` string COMMENT 'from deserializer', `product_name` string COMMENT 'from deserializer', `price` string COMMENT 'from deserializer', `quantity` string COMMENT 'from deserializer', `type` string COMMENT 'from deserializer', `code` string COMMENT 'from deserializer', `start_time` string COMMENT 'from deserializer', `end_time` string COMMENT 'from deserializer', `beans` string COMMENT 'from deserializer', `materiel_code` string COMMENT 'from deserializer', `materiel_name` string COMMENT 'from deserializer', `row_timestamp` string COMMENT 'from deserializer', `row_status` string COMMENT 'from deserializer')
+PARTITIONED BY (`count_date` string)
+ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+WITH SERDEPROPERTIES (
+  'serialization.format' = '1'
+)
+STORED AS
+  INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
+  OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat';
+
+
+
+CREATE TABLE `ods_order_info`(`id` string COMMENT 'from deserializer', `app_id` string COMMENT 'from deserializer', `app_order_id` string COMMENT 'from deserializer', `user_id` string COMMENT 'from deserializer', `user_name` string COMMENT 'from deserializer', `sale_channel_id` string COMMENT 'from deserializer', `sale_channel_name` string COMMENT 'from deserializer', `s_state` string COMMENT 'from deserializer', `s_create_time` string COMMENT 'from deserializer', `s_delete_time` string COMMENT 'from deserializer', `order_price` string COMMENT 'from deserializer', `discount` string COMMENT 'from deserializer', `pay_channel` string COMMENT 'from deserializer', `pay_time` string COMMENT 'from deserializer', `pay_price` string COMMENT 'from deserializer', `pay_tradeno` string COMMENT 'from deserializer', `remark` string COMMENT 'from deserializer', `beans` string COMMENT 'from deserializer', `bean_type` string COMMENT 'from deserializer', `coupons` string COMMENT 'from deserializer', `row_timestamp` string COMMENT 'from deserializer', `row_status` string COMMENT 'from deserializer')
+PARTITIONED BY (`count_date` string)
+ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+WITH SERDEPROPERTIES (
+  'serialization.format' = '1'
+)
+STORED AS
+  INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
+  OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat';

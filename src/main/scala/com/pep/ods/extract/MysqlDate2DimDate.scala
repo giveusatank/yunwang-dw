@@ -18,9 +18,9 @@ object MysqlDate2DimDate {
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     val props = new java.util.Properties
     val tableName = "dim_date"
-    props.setProperty("user","root")
-    props.setProperty("password","rjszgs2019")
-    props.setProperty("url","jdbc:mysql://172.30.0.9:3306/dim")
+    props.setProperty("user","pdadmin")
+    props.setProperty("password","R8$7Zo319%0tUi")
+    props.setProperty("url","jdbc:mysql://rm-2zefoq89s74i5bfal.mysql.rds.aliyuncs.com:3306/yw_bus")
 
     //定义SparkSQL读取Mysql的线程数量，以及线程的读取数据量
     val predicates = Array(
@@ -38,18 +38,18 @@ object MysqlDate2DimDate {
 
     val mysqlReadDF: DataFrame = spark.read.format("jdbc").jdbc(props.getProperty("url"),tableName,predicates,props)
 
-    val createSql =
-      s"""
-         |create table if not exists dim.dim_date(
-         |ymd            string,
-         |week           string,
-         |ymd_name       string,
-         |ym             string,
-         |ym_name        string
-         |)
-         |STORED AS parquet
-      """.stripMargin
-    spark.sql(createSql)
+//    val createSql =
+//      s"""
+//         |create table if not exists dim.dim_date(
+//         |ymd            string,
+//         |week           string,
+//         |ymd_name       string,
+//         |ym             string,
+//         |ym_name        string
+//         |)
+//         |STORED AS parquet
+//      """.stripMargin
+//    spark.sql(createSql)
 
     //创建临时表
 
@@ -63,7 +63,7 @@ object MysqlDate2DimDate {
     val etlDF: DataFrame = spark.sql(etlSql)
 
     val writeDF = etlDF.coalesce(1)
-    writeDF.write.mode("overwrite").parquet("hdfs://ns/hive/warehouse/dim.db/dim_date")
+    writeDF.write.mode("overwrite").parquet("hdfs://emr-cluster/user/hive/warehouse/dim.db/dim_date")
 
     spark.stop()
   }
