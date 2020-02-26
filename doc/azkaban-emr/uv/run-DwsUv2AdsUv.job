@@ -9,7 +9,6 @@ command=sh spark-submit \
  --executor-cores 2 \
  --queue default \
  --conf spark.yarn.maxAppAttempts=0 \
- --files /etc/ecm/hive-conf/hive-site.xml \
  --class com.pep.ads.uv.DwsUv2AdsUvSummary \
  /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar
 dependencies=run-DwdActionDoLog2DwsUv

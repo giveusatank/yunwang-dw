@@ -9,7 +9,6 @@ command=sh spark-submit \
  --executor-cores 2 \
  --conf spark.yarn.maxAppAttempts=0 \
  --queue default \
- --files /etc/ecm/hive-conf/hive-site.xml \
  --class com.pep.dwd.OdsActionLogOt2DwdActionDoLog \
  /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 1
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
