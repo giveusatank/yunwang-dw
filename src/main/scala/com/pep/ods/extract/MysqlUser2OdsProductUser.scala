@@ -19,7 +19,6 @@ object MysqlUser2OdsProductUser {
     val props = new java.util.Properties
     var mappingRule: MappingRuleConfig = MappingRuleInit.mappingRuleConfig
     if (mappingRule == null) {
-      println("tttttttttttttttttttttttt")
       return
     }
     val tableName = mappingRule.getTable_name

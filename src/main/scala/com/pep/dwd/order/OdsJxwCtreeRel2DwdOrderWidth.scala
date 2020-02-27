@@ -106,7 +106,7 @@ object OdsJxwCtreeRel2DwdOrderWidth {
         |STORED AS
         |  INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
         |OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
-        |LOCATION 'hdfs://ns/pep_cloud/business/ods/ods_jxw_platform_user_ctree_rel'
+        |LOCATION '/pep_cloud/business/ods/ods_jxw_platform_user_ctree_rel'
       """.stripMargin
     spark.sql(createSql1)
 

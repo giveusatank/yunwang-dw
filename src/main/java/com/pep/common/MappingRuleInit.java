@@ -23,7 +23,7 @@ public class MappingRuleInit {
 
     public static String generateSQL(MappingRuleConfig rule, String tmpTableName) {
         Map<String, String> mapping = rule.getMapping();
-        StringBuffer sqlBuf = new StringBuffer("insert into table ods.ods_product_user partition(put_date) ");
+        StringBuffer sqlBuf = new StringBuffer("insert overwrite table ods.ods_product_user partition(put_date) ");
         sqlBuf.append("select ");
         for (Map.Entry<String, String> entry : mapping.entrySet()) {
             String key = entry.getKey();

@@ -95,7 +95,7 @@ object MysqlJxwWebUserCtreeRel2DataWarehouse {
     spark.sql(createSql)
     val insertSql =
     s"""
-         |insert into table ods_jxw_platform_user_ctree_rel partition (count_date='20190000')
+         |insert overwrite table ods_jxw_platform_user_ctree_rel partition (count_date='20190000')
          |select * from insert_user_ctree_rel
       """.stripMargin
 

@@ -32,7 +32,7 @@ object OdsOriginalLog2ActionLog {
 
       val sql_1 =
         s"""
-           |insert into action_log PARTITION (put_date)
+           |insert overwrite action_log PARTITION (put_date)
            |select '',
            |       remote_addr,
            |       request_time,

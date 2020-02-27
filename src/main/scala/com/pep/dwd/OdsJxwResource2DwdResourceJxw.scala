@@ -147,7 +147,7 @@ object OdsJxwResource2DwdResourceJxw {
       """.stripMargin
     val readRddDF:DataFrame = spark.sql(selectSql)
 
-    var write_path = s"hdfs://ns//hive/warehouse/dwd.db/dwd_resource_jxw/"
+    var write_path = s"hdfs://emr-cluster//hive/warehouse/dwd.db/dwd_resource_jxw/"
 
     val writeDF = readRddDF.repartition(20)
     writeDF.write.mode("overwrite").json(write_path)

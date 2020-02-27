@@ -163,7 +163,7 @@ object OdsZykResource2DwdZykResource {
       """.stripMargin
 
     val readRddDF:DataFrame = spark.sql(readSql)
-    var write_path = s"hdfs://ns/hive/warehouse/dwd.db/dwd_resource_zyk"
+    var write_path = s"hdfs://emr-cluster/hive/warehouse/dwd.db/dwd_resource_zyk"
     val writeDF= readRddDF.coalesce(20)
     writeDF.write.mode("overwrite").json(write_path)
 
