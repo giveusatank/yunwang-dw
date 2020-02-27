@@ -1,0 +1,5 @@
+#sale-end.job
+type=command
+command=echo "order-end"
+dependencies=run-DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis
+working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

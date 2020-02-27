@@ -18,7 +18,7 @@ public class MappingRuleInit {
 
     public static void init(String mappingRule) {
         InputStream inputStream = MappingRuleConfig.class.getResourceAsStream(mappingRule);
-        mappingRuleConfig = JSON.parseObject(intputStream2String(inputStream), MappingRuleConfig.class);
+        mappingRuleConfig = JSON.parseObject(inputStream2String(inputStream), MappingRuleConfig.class);
     }
 
     public static String generateSQL(MappingRuleConfig rule, String tmpTableName) {
@@ -34,7 +34,7 @@ public class MappingRuleInit {
         return sql;
     }
 
-    public static String intputStream2String(InputStream inputStream) {
+    public static String inputStream2String(InputStream inputStream) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int i = -1;
         try {

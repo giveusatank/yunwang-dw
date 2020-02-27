@@ -1,0 +1,4 @@
+#terminal_subflow.job
+type=flow
+flow.name=terminal-end
+dependencies=used_subflow
