@@ -2,7 +2,7 @@
   "db_user":"pdadmin",
   "db_password":"R8$7Zo319%0tUi",
   "db_url":"jdbc:mysql://rm-2zefoq89s74i5bfal.mysql.rds.aliyuncs.com:3306/yw_bus",
-  "table_name":"jx_click_pep_a_user",
+  "table_name":"jx_click_pep_p_user",
   "mapping":
       {
         "user_id"           :"user_id",
