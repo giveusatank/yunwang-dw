@@ -1,6 +1,7 @@
 package com.pep.ads.uv
 
 import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 import java.util.{Calendar, Date}
 
 import com.pep.common.{Constants, DbProperties}
@@ -291,7 +292,7 @@ object DwsUv2AdsUvSummary {
       s"""
          |insert overwrite table ads_uv_area_until_week_month partition(count_date='${todayStr}')
          |select product_id,company,country,province,count(distinct(temp1.device_id))
-         |as act_uv,'${week_type}',dws.dateUtilUDF('week','${todayStr}')
+         |as act_uv,'${week_type}',dws.dateUtilUDF('week',unix_timestamp('${todayStr}','yyyyMMdd'))
          |from (select product_id,company,country,province,device_id from dws.dws_uv_total where
          |(last_access_time>='${beginWeekTs}' and last_access_time<='${endWeekTs}' ) or
          |(first_access_time>='${beginWeekTs}' and first_access_time<='${endWeekTs}') )
@@ -350,7 +351,7 @@ object DwsUv2AdsUvSummary {
       s"""
          |insert overwrite table ads_uv_area_until_week_month partition(count_date='${todayStr}')
          |select product_id,company,country,province,count(distinct(temp1.device_id))
-         |as act_uv,'${month_type}',concat(substring(count_date,1,4),"-",substring(count_date,5,2))
+         |as act_uv,'${month_type}',concat(substring('${todayStr}',1,4),"-",substring('${todayStr}',5,2))
          |from (select product_id,company,country,province,device_id from dws.dws_uv_total where
          |(last_access_time>='${beginMonthTs}' and last_access_time<='${endMonthTs}' ) or
          |(first_access_time>='${beginMonthTs}' and first_access_time<='${endMonthTs}') )
