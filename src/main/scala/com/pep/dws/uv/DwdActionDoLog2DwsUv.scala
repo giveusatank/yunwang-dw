@@ -255,6 +255,8 @@ object DwdActionDoLog2DwsUv {
          |       max(last_access_time)  as last_access_time,
          |       sum(action_count)      as action_count,
          |       sum(session_count)     as session_count,
+         |       sum(launch_used_time)                                          as action_count,
+         |       sum(launch_count)                                              as session_count,
          |       '$yestStr'
          |from dws.dws_uv_total_$yestStr
          |group by product_id, company, active_user, device_id
