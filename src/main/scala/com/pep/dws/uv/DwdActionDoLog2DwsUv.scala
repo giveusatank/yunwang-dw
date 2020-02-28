@@ -169,9 +169,36 @@ object DwdActionDoLog2DwsUv {
     spark.sql(createSql)
 
     //1.插入增量数据
+//    val insertSql =
+//      s"""
+//         |insert overwrite table dws.dws_uv_total
+//         |select product_id,
+//         |       company,
+//         |       split(max(concat(last_access_time, '-', remote_addr)), '-')[1] as last_remote_addr,
+//         |       split(max(concat(last_access_time, '-', country)), '-')[1] as last_country,
+//         |       split(max(concat(last_access_time, '-', province)), '-')[1] as last_province ,
+//         |       split(max(concat(last_access_time, '-', city)), '-')[1] as last_city,
+//         |       split(max(concat(last_access_time, '-', location)), '-')[1] as last_location,
+//         |       split(max(concat(last_access_time, '-', region)), '-')[1] as last_region,
+//         |       active_user,
+//         |       device_id,
+//         |       min(first_access_time)                                         as first_access_time,
+//         |       max(last_access_time)                                          as last_access_time,
+//         |       sum(action_count)                                              as action_count,
+//         |       sum(session_count)                                             as session_count,
+//         |       sum(launch_used_time)                                          as action_count,
+//         |       sum(launch_count)                                              as session_count,
+//         |       '$yestStr'
+//         |from dws.dws_uv_daily
+//         |group by product_id, company, active_user, device_id
+//      """.stripMargin
+//
+//    spark.sql(insertSql)
+
+    //1.插入增量数据
     val insertSql =
       s"""
-         |insert overwrite table dws.dws_uv_total
+         |insert into dws.dws_uv_total
          |select product_id,
          |       company,
          |       split(max(concat(last_access_time, '-', remote_addr)), '-')[1] as last_remote_addr,
@@ -190,12 +217,11 @@ object DwdActionDoLog2DwsUv {
          |       sum(launch_count)                                              as session_count,
          |       '$yestStr'
          |from dws.dws_uv_daily
+         |where count_date = '$yestStr'
          |group by product_id, company, active_user, device_id
       """.stripMargin
 
     spark.sql(insertSql)
-
-    /*
     //2.修改标明 dws_uv_total_20190504
     val dropYestStrSql =
       s"""
@@ -241,7 +267,7 @@ object DwdActionDoLog2DwsUv {
          |drop table if exists dws_uv_total_${_7DaysBefore}
       """.stripMargin
     spark.sql(dropSql)
-    */
+
 
 
   }
