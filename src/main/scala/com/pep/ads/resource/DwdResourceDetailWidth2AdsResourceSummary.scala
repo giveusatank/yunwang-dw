@@ -19,7 +19,7 @@ object DwdResourceDetailWidth2AdsResourceSummary {
     val checkFlag = if(args.length==1&&patternReg.findPrefixOf(args(0))!=None) true else false
     loop.breakable{
       if(!checkFlag) loop.break();
-      doAction(spark,args(0))
+      //doAction(spark,args(0))
     }
   }
   def doAction(spark: SparkSession, todayStr: String) = {
