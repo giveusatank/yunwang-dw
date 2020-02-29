@@ -13,27 +13,28 @@ object DwsUvTotal2DwdUserArea {
   def main(args: Array[String]): Unit = {
 
     val conf = new SparkConf().setAppName("RUN-DwsUvTotal2DwdUserArea")
-    val sc = new SparkContext(conf)
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     val loop = new Breaks
     val withParams = args.length > 0
-    val regPattern = "^[0-9]{9}$".r
+    val regPattern = "^[0-9]{8}$".r
     val format = new SimpleDateFormat("yyyyMMdd")
     val cal = Calendar.getInstance()
     cal.setTime(new Date())
     cal.add(Calendar.DATE, -1)
     var yestodayStr = format.format(cal.getTime)
-
+    println(args(0))
     loop.breakable {
       for (i <- 0 until (if (withParams) args.length else 1)) {
+        println(args.length)
         if (withParams) {
           if (regPattern.findPrefixOf(args(i)) == None) loop.break()
           yestodayStr = args(i)
+          print(yestodayStr)
         }
         doAction(spark, yestodayStr)
       }
-      spark.stop()
     }
+    spark.stop()
 
   }
 
