@@ -10,6 +10,6 @@ command=sh spark-submit \
  --queue default \
  --conf spark.yarn.maxAppAttempts=0 \
  --class com.pep.ads.puser.DwdProductUser2AdsPuserIncrease \
- /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 20200227
+ /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 20200228
 dependencies=run-OdsProductUser2DwdProductUser
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
