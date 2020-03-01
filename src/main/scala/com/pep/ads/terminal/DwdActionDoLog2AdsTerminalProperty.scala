@@ -3,6 +3,7 @@ package com.pep.ads.terminal
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Date}
 
+import com.pep.common.DbProperties
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 
@@ -100,10 +101,7 @@ object DwdActionDoLog2AdsTerminalProperty {
 
   def writeAdsTerminalProperty2PostgreSql(spark: SparkSession, yesStr: String) = {
 
-    val props = new java.util.Properties()
-    props.setProperty("user","pgadmin")
-    props.setProperty("password","szkf2019")
-    props.setProperty("url","jdbc:postgresql://172.30.0.9:5432/bi")
+    val props = DbProperties.propScp
     props.setProperty("tableName","ads_terminal_property")
     props.setProperty("write_mode","Append")
 

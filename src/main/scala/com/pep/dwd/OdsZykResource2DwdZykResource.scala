@@ -145,7 +145,72 @@ object OdsZykResource2DwdZykResource {
     //sql :
     val readSql =
       """
-        |select t.*,t3.chapter_id as chapter_id,if(!isnull(t3.chapter_id),dws.geteducode(t3.chapter_id,'educode'),'') as tb_id from
+        |insert overwrite table dwd.dwd_resource_zyk
+        |select t.rid                   ,
+        |t.file_md5              ,
+        |t.r_name                ,
+        |t.r_desc                ,
+        |t.r_key                 ,
+        |t.r_people              ,
+        |t.r_language            ,
+        |t.r_thumb               ,
+        |t.r_ext                 ,
+        |t.cid1                  ,
+        |t.cid2                  ,
+        |t.cid3                  ,
+        |t.rtype1                ,
+        |t.rtype2                ,
+        |t.tid1_path             ,
+        |t.tid2_path             ,
+        |t.c_version             ,
+        |t.c_type                ,
+        |t.c_date_start          ,
+        |t.c_date_end            ,
+        |t.c_owner               ,
+        |t.c_scope               ,
+        |t.c_scope_has           ,
+        |t.c_author              ,
+        |t.c_from                ,
+        |t.create_time           ,
+        |t.publish_time          ,
+        |t.r_status              ,
+        |t.uid                   ,
+        |t.uname                 ,
+        |t.downs                 ,
+        |t.favs                  ,
+        |t.hits                  ,
+        |t.stars                 ,
+        |t.attachs               ,
+        |t.r_grade               ,
+        |t.r_birth_year          ,
+        |t.r_senv                ,
+        |t.r_sver_min            ,
+        |t.r_sver_max            ,
+        |t.r_sdesc               ,
+        |t.r_splat               ,
+        |t.c_sug                 ,
+        |t.c_authorship          ,
+        |t.c_payfor              ,
+        |t.c_limit_area          ,
+        |t.c_limit_user          ,
+        |t.c_limit_plat          ,
+        |t.r_version             ,
+        |t.rpy                   ,
+        |t.tid3_path             ,
+        |t.tid4_path             ,
+        |t.tid5_path             ,
+        |t.row_timestamp         ,
+        |t.row_status            ,
+        |t.put_date              ,
+        |t.num                   ,
+        |t.rel_file_md5          ,
+        |t.file_url_view         ,
+        |t.file_url              ,
+        |t.file_size             ,
+        |t.file_oname            ,
+        |t.file_name             ,
+        |t.file_extension        ,
+        |t.pid                   ,t3.chapter_id as chapter_id,if(!isnull(t3.chapter_id),dws.geteducode(t3.chapter_id,'educode'),'') as tb_id from
         |(select a.*,c.file_md5 as rel_file_md5,c.file_url_view,c.file_url,c.file_size,c.file_oname,c.file_name,c.file_extension,d.pid
         |from (select * from (select *, row_number() over (partition by rid order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_resource) where num=1 and row_status in ('1','2')) a
         | join (select * from (select *, row_number() over (partition by attach_id order by row_timestamp desc ) num from ods.ods_zyk_pep_cn_attach) where num=1 and row_status in ('1','2')) b on a.rid=b.rid
@@ -161,11 +226,12 @@ object OdsZykResource2DwdZykResource {
         |on t.rid=t2.rid
         |left join ods.ods_zyk_pep_cn_tree t3 on t2.chapter_id=t3.tid
       """.stripMargin
+    spark.sql(readSql)
 
-    val readRddDF:DataFrame = spark.sql(readSql)
-    var write_path = s"hdfs://emr-cluster/hive/warehouse/dwd.db/dwd_resource_zyk"
-    val writeDF= readRddDF.coalesce(20)
-    writeDF.write.mode("overwrite").json(write_path)
+//    val readRddDF:DataFrame = spark.sql(readSql)
+//    var write_path = s"hdfs://emr-cluster/hive/warehouse/dwd.db/dwd_resource_zyk"
+//    val writeDF= readRddDF.coalesce(20)
+//    writeDF.write.mode("overwrite").json(write_path)
 
   }
 

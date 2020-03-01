@@ -3,13 +3,13 @@ type=command
 command=sh spark-submit \
  --master yarn \
  --deploy-mode cluster \
- --num-executors 20 \
- --executor-memory 3G \
- --driver-memory 1G \
- --executor-cores 2 \
+ --num-executors 5 \
+ --executor-memory 32G \
+ --driver-memory 2G \
+ --executor-cores 8 \
  --queue default \
  --conf spark.yarn.maxAppAttempts=0 \
  --class com.pep.ads.order.DwdSaleAnalysisWidth2AdsSaleRelatedAnalysis \
- /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar
+ /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 20200226
 dependencies=run-OdsJxwCtreeRel2DwdOrderWidth
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

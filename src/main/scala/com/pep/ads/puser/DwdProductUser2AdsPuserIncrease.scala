@@ -80,7 +80,7 @@ object DwdProductUser2AdsPuserIncrease {
          |(select * from dwd.dwd_product_user where from_unixtime(cast(first_access_time as bigint) / 1000,'yyyyMMdd')='${yesStr}')
          |as t1 left join dwd.dwd_user_area as t2 on
          |t1.product_id=t2.product_id and t1.company=t2.company and t1.user_id=t2.active_user) as temp )
-         |as ress) group by ress.pid,ress.com,ress.country,ress.province,ress.rtt) as temp2 group by
+         |as ress) as ress group by ress.pid,ress.com,ress.country,ress.province,ress.rtt) as temp2 group by
          |temp2.product_id,temp2.company,temp2.country,temp2.province,temp2.week,temp2.month
          |grouping sets(
          |(temp2.product_id),

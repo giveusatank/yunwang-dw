@@ -12,7 +12,6 @@ object MysqlJxwPlatfromTextbook2DataWarehouse {
   def main(args: Array[String]): Unit = {
 
     val conf = new SparkConf().setAppName("RUN-MysqlProductUserTotal2DataWarehouse")
-    val sc = new SparkContext(conf)
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     val props = new java.util.Properties
     val tableName = "p_textbook"

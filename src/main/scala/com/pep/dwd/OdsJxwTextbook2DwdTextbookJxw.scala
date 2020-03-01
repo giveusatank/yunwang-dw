@@ -93,6 +93,7 @@ object OdsJxwTextbook2DwdTextbookJxw {
         |num                  string
         |)
         |ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+        |stored as textfile
       """.stripMargin
 
     spark.sql(createSql)
@@ -101,16 +102,57 @@ object OdsJxwTextbook2DwdTextbookJxw {
 
     val selectSql =
       """
-        |select * from (
+        |insert overwrite table dwd.dwd_textbook_jxw
+        |select id                   ,
+        |name                 ,
+        |sub_heading          ,
+        |rkxd                 ,
+        |rkxd_name            ,
+        |nj                   ,
+        |nj_name              ,
+        |zxxkc                ,
+        |zxxkc_name           ,
+        |fascicule            ,
+        |fascicule_name       ,
+        |year                 ,
+        |isbn                 ,
+        |publisher            ,
+        |chapter_json         ,
+        |source_id            ,
+        |ex_content_version   ,
+        |down_times           ,
+        |s_state              ,
+        |s_creator            ,
+        |s_creator_name       ,
+        |s_create_time        ,
+        |s_modifier           ,
+        |s_modifier_name      ,
+        |s_modify_time        ,
+        |ex_books             ,
+        |ex_booke             ,
+        |ex_pages             ,
+        |ed                   ,
+        |publication_time     ,
+        |folio                ,
+        |series               ,
+        |content              ,
+        |res_size             ,
+        |tb_version           ,
+        |res_version          ,
+        |row_timestamp        ,
+        |row_status           ,
+        |put_date             ,
+        |num         from (
         |select *, row_number() over (partition by id order by row_timestamp desc ) num from ods.ods_jxw_platform_p_textbook
         |) where num=1 and row_status in ('1','2')
       """.stripMargin
-    val readRddDF:DataFrame = spark.sql(selectSql)
-
-    var write_path = s"hdfs://emr-cluster//hive/warehouse/dwd.db/dwd_textbook_jxw/"
-
-    val writeDF = readRddDF.repartition(20)
-    writeDF.write.mode("overwrite").json(write_path)
+    spark.sql(selectSql)
+//    val readRddDF:DataFrame = spark.sql(selectSql)
+//
+//    var write_path = s"hdfs://emr-cluster/hive/warehouse/dwd.db/dwd_textbook_jxw/"+ System.currentTimeMillis()+"/"
+//
+//    val writeDF = readRddDF.repartition(20)
+//    writeDF.write.json(write_path)
 
   }
 

@@ -76,7 +76,7 @@ object DwdProductUser2AdsPuserTotal {
         |t2.city) as cou from
         |dwd.dwd_product_user as t1 left join dwd.dwd_user_area as t2 on
         |t1.product_id=t2.product_id and t1.company=t2.company and t1.user_id=t2.active_user and t2.country='中国') as temp )
-        |as ress) group by ress.pid,ress.com,ress.country,ress.province
+        |as ress) as ress group by ress.pid,ress.com,ress.country,ress.province
         |grouping sets (
         |(ress.pid,ress.com,ress.country,ress.province),
         |(ress.pid,ress.com)

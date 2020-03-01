@@ -139,18 +139,87 @@ object OdsJxwResource2DwdResourceJxw {
     spark.sql("truncate table dwd.dwd_resource_jxw")
     val selectSql =
       """
-        |select a.*,b.s_state as tb_state,b.zxxkc,b.nj from (
+        |insert overwrite table dwd.dwd_resource_jxw
+        |select a.id                      ,
+        |a.keywords                       ,
+        |a.resume                         ,
+        |a.title                          ,
+        |a.year                           ,
+        |a.ex_zycj                        ,
+        |a.dzwjlx                        ,
+        |a.dzwjlx_name                   ,
+        |a.zylx                          ,
+        |a.zylx_name                     ,
+        |a.yhlx                          ,
+        |a.mtgslx                        ,
+        |a.source_id                     ,
+        |a.source_pid                    ,
+        |a.source_app                    ,
+        |a.source_batch                  ,
+        |a.source_handler                ,
+        |a.ori_tree_code                 ,
+        |a.ori_tree_name                 ,
+        |a.ori_tree_pos                  ,
+        |a.s_edu_code                    ,
+        |a.file_path                     ,
+        |a.file_format                   ,
+        |a.file_size                     ,
+        |a.file_md5                      ,
+        |a.file_ecry_type                ,
+        |a.s_bak_flag                    ,
+        |a.pic_pre_sum                   ,
+        |a.pic_thumb_state               ,
+        |a.s_state                       ,
+        |a.s_creator                     ,
+        |a.s_creator_name                ,
+        |a.s_create_time                 ,
+        |a.s_modifier                    ,
+        |a.s_modifier_name               ,
+        |a.s_modify_time                 ,
+        |a.down_numb                     ,
+        |a.score                         ,
+        |a.ex_linktype                   ,
+        |a.ex_linkcolor                  ,
+        |a.ex_linksort                   ,
+        |a.ex1                           ,
+        |a.ex2                           ,
+        |a.ex3                           ,
+        |a.ex4                           ,
+        |a.ex5                           ,
+        |a.ex_turnpage                   ,
+        |a.ex_gallery                    ,
+        |a.ex_zynrlx                     ,
+        |a.ex_zynrlx_name                ,
+        |a.ex_rely                       ,
+        |a.ex_content_version            ,
+        |a.tb_id                         ,
+        |a.jump_page                     ,
+        |a.res_setting                   ,
+        |a.relation_resinfo              ,
+        |a.measure_resinfo               ,
+        |a.res_group                     ,
+        |a.view_numb                     ,
+        |a.ex_jxsx                       ,
+        |a.ex_page                       ,
+        |a.ex_pos_description            ,
+        |a.ex_limit_plat                 ,
+        |a.ex_from                       ,
+        |a.row_timestamp                 ,
+        |a.row_status                    ,
+        |a.put_date                      ,
+        |a.num                           ,b.s_state as tb_state,b.zxxkc,b.nj from (
         |select * from (select *, row_number() over (partition by id order by row_timestamp desc ) num from ods.ods_jxw_platform_p_resource ) where num=1 and row_status in ('1','2')
         |) a join (
         |select * from (select *, row_number() over (partition by id order by row_timestamp desc ) num from ods.ods_jxw_platform_p_textbook ) where num=1 and row_status in ('1','2')
         |) b on a.tb_id=b.id
       """.stripMargin
-    val readRddDF:DataFrame = spark.sql(selectSql)
-
-    var write_path = s"hdfs://emr-cluster//hive/warehouse/dwd.db/dwd_resource_jxw/"
-
-    val writeDF = readRddDF.repartition(20)
-    writeDF.write.mode("overwrite").json(write_path)
+    spark.sql(selectSql)
+//    val readRddDF:DataFrame = spark.sql(selectSql)
+//
+//    var write_path = s"hdfs://emr-cluster/hive/warehouse/dwd.db/dwd_resource_jxw/"
+//
+//    val writeDF = readRddDF.repartition(20)
+//    writeDF.write.mode("overwrite").json(write_path)
 
   }
 
