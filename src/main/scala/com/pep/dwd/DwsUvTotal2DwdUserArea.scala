@@ -22,7 +22,6 @@ object DwsUvTotal2DwdUserArea {
     cal.setTime(new Date())
     cal.add(Calendar.DATE, -1)
     var yestodayStr = format.format(cal.getTime)
-    println(args(0))
     loop.breakable {
       for (i <- 0 until (if (withParams) args.length else 1)) {
         println(args.length)
