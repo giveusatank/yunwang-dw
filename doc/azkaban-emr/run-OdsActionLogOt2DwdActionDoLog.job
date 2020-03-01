@@ -10,6 +10,5 @@ command=sh spark-submit \
  --conf spark.yarn.maxAppAttempts=0 \
  --queue default \
  --class com.pep.dwd.OdsOriginalActionLog2DwdActionDoLogByDay \
- /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 1 20200226
+ /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 1 20200227
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
-dependencies=run-OSSLog2OriginalActionLog

@@ -10,5 +10,5 @@ command=sh spark-submit \
  --queue default \
  --conf spark.yarn.maxAppAttempts=0 \
  --class com.pep.dws.textbook.DwdActionDoLog2DwsTextBookTotal  \
- /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 20200226
+ /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 20200227
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

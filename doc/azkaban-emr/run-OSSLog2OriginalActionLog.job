@@ -10,5 +10,5 @@ command=sh spark-submit \
  --conf spark.yarn.maxAppAttempts=0 \
  --queue default \
  --class com.pep.oss.OSSZipByDay \
- /root/pep-job/yunwang-aliyun-1.0.1-SNAPSHOT.jar 20200226
+ /root/pep-job/yunwang-aliyun-1.0.1-SNAPSHOT.jar 20200227
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
