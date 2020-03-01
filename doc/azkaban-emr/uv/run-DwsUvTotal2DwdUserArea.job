@@ -10,6 +10,6 @@ command=sh spark-submit \
  --queue default \
  --conf spark.yarn.maxAppAttempts=0 \
  --class com.pep.dwd.DwsUvTotal2DwdUserArea \
- /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 20200223
+ /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 20200228
 dependencies=run-DwdActionDoLog2DwsUv
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
