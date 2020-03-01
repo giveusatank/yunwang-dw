@@ -1,6 +1,6 @@
 #yunwangdw-daily-paper.job
 type=command
-command=sh /usr/local/spark-2.2.3-bin-hadoop2.6/bin/spark-submit \
+command=sh spark-submit \
  --master yarn \
  --deploy-mode cluster \
  --num-executors 5 \
