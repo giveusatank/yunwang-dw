@@ -8,7 +8,7 @@ command=sh spark-submit \
  --driver-memory 2G \
  --executor-cores 8 \
  --conf spark.yarn.maxAppAttempts=0 \
- --queue default \
+ --queue dwq \
  --class com.pep.dwd.OdsOriginalActionLog2DwdActionDoLogByDay \
  /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 1
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

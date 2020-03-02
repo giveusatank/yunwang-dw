@@ -8,7 +8,7 @@ command=sh spark-submit \
  --driver-memory 2G \
  --executor-cores 8 \
  --conf spark.yarn.maxAppAttempts=0 \
- --queue default \
+ --queue dwq \
  --class com.pep.email.DailyEmailSender \
 /root/pep-job/daily-email-dw-1.0-SNAPSHOT.jar
 dependencies=uv_subflow,textbook_subflow,puser_subflow,rj_subflow,used_subflow,resource_subflow,terminal_subflow

@@ -7,7 +7,7 @@ command=sh spark-submit \
  --executor-memory 32G \
  --driver-memory 2G \
  --executor-cores 8 \
- --queue default \
+ --queue dwq \
  --conf spark.yarn.maxAppAttempts=0 \
  --class com.pep.dwd.order.OdsJxwCtreeRel2DwdOrderWidth \
  /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar
