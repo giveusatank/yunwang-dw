@@ -23,7 +23,7 @@ public class YuwangDwBiShowDate {
         calendar.add(Calendar.DATE,-1);
         String yestodayStr = format.format(calendar.getTime());
 
-        String insertSql = "insert into show.bi_show (bi_show_time) VALUES (?);";
+        String insertSql = "insert into show.bi_show (bi_show_time) VALUES (?); ";
 
         //读取数据源文件
         InputStream input = YuwangDwBiShowDate.class.getClassLoader().getResourceAsStream("datasource.properties");
