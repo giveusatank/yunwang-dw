@@ -1,0 +1,5 @@
+#rj-end.job
+type=command
+command=echo "rj-end"
+dependencies=run-AdsRjWebSummary
+working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

@@ -1,0 +1,14 @@
+#run-OSSLog2OriginalActionLog.job
+type=command
+command=sh spark-submit \
+ --master yarn \
+ --deploy-mode cluster \
+ --num-executors 2 \
+ --executor-memory 32G \
+ --driver-memory 1G \
+ --executor-cores 16 \
+ --conf spark.yarn.maxAppAttempts=0 \
+ --queue dwq \
+ --class com.pep.oss.OSSZipByDay \
+ /root/pep-job/yunwang-aliyun-1.0.1-SNAPSHOT.jar
+working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

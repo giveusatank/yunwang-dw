@@ -1,0 +1,5 @@
+#resource-end.job
+type=command
+command=echo "resource-end"
+dependencies=run-DwdJxwResource2AdsJxwResource,run-DwdZykResource2AdsZykResource,run-OdsZykResource2DwdZykResource
+working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

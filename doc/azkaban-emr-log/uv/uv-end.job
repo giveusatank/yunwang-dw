@@ -1,0 +1,5 @@
+#uv-end.job
+type=command
+command=echo "uv-end"
+dependencies=run-DwsUv2AdsUv,run-DwsUvTotal2DwdUserArea
+working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
