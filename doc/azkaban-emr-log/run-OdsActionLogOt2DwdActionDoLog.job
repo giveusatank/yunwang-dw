@@ -1,14 +1,14 @@
-#run-DwdActionDoLog2DwsTextBookTotal.job
+#run-OdsActionLogOt2DwdActionDoLog.job
 type=command
 command=sh spark-submit \
  --master yarn \
  --deploy-mode cluster \
- --num-executors 5 \
+ --num-executors 8 \
  --executor-memory 32G \
  --driver-memory 2G \
  --executor-cores 8 \
- --queue dwq \
  --conf spark.yarn.maxAppAttempts=0 \
- --class com.pep.dws.textbook.DwdActionDoLog2DwsTextBookTotal  \
- /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar
+ --queue dwq \
+ --class com.pep.dwd.OdsActionLogOt2DwdActionDoLog \
+ /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar 1
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

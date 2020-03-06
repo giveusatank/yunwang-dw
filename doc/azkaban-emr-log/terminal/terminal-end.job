@@ -1,0 +1,5 @@
+#terminal-end.job
+type=command
+command=echo "terminal-end"
+dependencies=run-DwdActionDoLog2AdsTerminalProperty
+working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
