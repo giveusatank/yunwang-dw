@@ -51,7 +51,7 @@ object DwdActionDoLog2DwsUv {
          |       split(max(concat(start_time, '-', city)), '-')[1] as city,
          |       split(max(concat(start_time, '-', location)), '-')[1] as location,
          |       split(max(concat(start_time, '-', region)), '-')[1] as region,
-         |       active_user,
+         |       max(active_user),
          |       device_id,
          |       group_id,
          |       ''              as group_actions,
@@ -63,8 +63,7 @@ object DwdActionDoLog2DwsUv {
          |       put_date
          |from dwd.action_do_log
          |where put_date = '$yestStr' and country='中国' and nvl(product_id,'')!='' and nvl(device_id,'')!='' and not(action_title like 'sys_1%' or action_title like 'sys_4%')
-         |group by product_id, remote_addr, dws.yunwangDateFormat('company',company),
-         |country, province, city, location,region, active_user, device_id, group_id, put_date
+         |group by product_id, dws.yunwangDateFormat('company',company), device_id, group_id, put_date
      """.stripMargin
 
     spark.sql(_sql1)
