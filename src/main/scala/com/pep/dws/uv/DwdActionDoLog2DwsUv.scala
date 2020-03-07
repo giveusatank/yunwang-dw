@@ -62,7 +62,7 @@ object DwdActionDoLog2DwsUv {
          |       dws.productTimeUsed(str_to_map(concat_ws(",", collect_set(concat_ws(':', cast(start_time as string), cast(action_title as string))))),900,2)  as launch_count,
          |       put_date
          |from dwd.action_do_log
-         |where put_date = '$yestStr' and country='中国' and nvl(product_id,'')!='' and nvl(device_id,'')!='' and not(action_title like 'sys_1%' or action_title like 'sys_4%')
+         |where put_date = '$yestStr' and country='中国' and nvl(product_id,'')!='' and nvl(device_id,'')!='' and not(action_title like 'sys_4%')
          |group by product_id, dws.yunwangDateFormat('company',company), device_id, group_id, put_date
      """.stripMargin
 
@@ -123,8 +123,7 @@ object DwdActionDoLog2DwsUv {
          |       count_date
          |from dws.dws_uv_session_daily
          |where count_date = '$yestStr'
-         |group by product_id, remote_addr, company, country, province, city,
-         |location,region, active_user, device_id, count_date
+         |group by product_id, active_user, device_id, count_date
          |
       """.stripMargin
 
@@ -380,9 +379,9 @@ object DwdActionDoLog2DwsUv {
     writeActionDoLog2DwsUvDaily(spark, yestStr)
 
     //方法2：将DwsUvDaily洗到DwsUvTotal中
-    writeDwsUvDaily2DwsUvTotal(spark, yestStr, _7DaysBefore)
+    //writeDwsUvDaily2DwsUvTotal(spark, yestStr, _7DaysBefore)
 
     //方法3：新增用户表
-    writeDwsUvDaily2DwsUvIncrease(spark, yestStr)
+    //writeDwsUvDaily2DwsUvIncrease(spark, yestStr)
   }
 }
