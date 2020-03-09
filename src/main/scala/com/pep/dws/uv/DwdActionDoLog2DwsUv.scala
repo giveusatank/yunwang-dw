@@ -65,7 +65,7 @@ object DwdActionDoLog2DwsUv {
          |where put_date = '$yestStr' and country='中国' and nvl(product_id,'')!='' and nvl(device_id,'')!='' and not(action_title like 'sys_4%')
          |group by product_id, dws.yunwangDateFormat('company',company), device_id, group_id, put_date
      """.stripMargin
-
+    println(_sql1)
     spark.sql(_sql1)
   }
 
@@ -123,7 +123,7 @@ object DwdActionDoLog2DwsUv {
          |       count_date
          |from dws.dws_uv_session_daily
          |where count_date = '$yestStr'
-         |group by product_id, active_user, device_id, count_date
+         |group by product_id,company, active_user, device_id, count_date
          |
       """.stripMargin
 
@@ -379,9 +379,9 @@ object DwdActionDoLog2DwsUv {
     writeActionDoLog2DwsUvDaily(spark, yestStr)
 
     //方法2：将DwsUvDaily洗到DwsUvTotal中
-    //writeDwsUvDaily2DwsUvTotal(spark, yestStr, _7DaysBefore)
+    writeDwsUvDaily2DwsUvTotal(spark, yestStr, _7DaysBefore)
 
     //方法3：新增用户表
-    //writeDwsUvDaily2DwsUvIncrease(spark, yestStr)
+    writeDwsUvDaily2DwsUvIncrease(spark, yestStr)
   }
 }

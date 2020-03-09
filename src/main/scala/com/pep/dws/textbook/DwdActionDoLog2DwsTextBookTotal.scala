@@ -50,14 +50,14 @@ object DwdActionDoLog2DwsTextBookTotal {
        |insert overwrite table dws.dws_textbook_used_session partition (count_date)
        |select product_id,
        |       dws.yunwangDateFormat('company',company),
-       |       country,
-       |       province,
-       |       city,
-       |       location,
+       |       split(max(concat(start_time, '-', country)), '-')[1] as country,
+       |       split(max(concat(start_time, '-', province)), '-')[1] as province ,
+       |       split(max(concat(start_time, '-', city)), '-')[1] as city,
+       |       split(max(concat(start_time, '-', location)), '-')[1] as location,
        |       if(active_user != '', active_user, device_id),
        |       device_id,
        |       group_id,
-       |       dws.yunwangdateformat('tbid', if(locate('[Id:{',passive_obj)>0,substr(passive_obj, 6,locate('}',passive_obj)-6),if(locate(',', passive_obj) > 0, split(passive_obj, ',')[1], passive_obj)) )                                                                       as passive_obj,
+       |       dws.yunwangdateformat('tbid', if(locate('[Id:{',passive_obj)>0,substr(passive_obj, 6,locate('}',passive_obj)-6),if(locate(',', passive_obj) > 0, split(passive_obj, ',')[1], if(instr(passive_obj,'{')=1,substring(passive_obj,2,13),passive_obj))) )                    as passive_obj,
        |       ods.TimeConsume(str_to_map(concat_ws(",", collect_set(concat_ws(':', cast(start_time as string), cast(action_title as string))))), "dd100001,jx200001,jx200175", "dd100002,jx200184,jx200016",
        |                       0)                                                                                                                                                              as sum_time_consume,
        |       ods.TimeConsume(str_to_map(concat_ws(",", collect_set(concat_ws(':', cast(start_time as string), cast(action_title as string))))), "dd100001,jx200001,jx200175", "dd100002,jx200184,jx200016",
@@ -74,9 +74,10 @@ object DwdActionDoLog2DwsTextBookTotal {
        |  and not (active_user = '' and device_id = 'null')
        |  and not (active_user = '' and device_id is null)
        |  and not (active_user = '' and device_id = '')
-       |group by product_id, dws.yunwangDateFormat('company',company), country, province, city, location, active_user, device_id, group_id,
-       |         dws.yunwangdateformat('tbid', if(locate('[Id:{',passive_obj)>0,substr(passive_obj, 6,locate('}',passive_obj)-6),if(locate(',', passive_obj) > 0, split(passive_obj, ',')[1], passive_obj)) ) ,
-       |         if(action_title in ('dd100001', 'jx200001','jx200175'), action_title, case when action_title = 'dd100002' then 'dd100001' when action_title = 'jx200184' then 'jx200001'  when action_title = 'jx200016' then 'jx200175' end), put_date
+       |group by product_id, dws.yunwangDateFormat('company',company), active_user, device_id, group_id,
+       |         dws.yunwangdateformat('tbid', if(locate('[Id:{',passive_obj)>0,substr(passive_obj, 6,locate('}',passive_obj)-6),if(locate(',', passive_obj) > 0, split(passive_obj, ',')[1], if(instr(passive_obj,'{')=1,substring(passive_obj,2,13),passive_obj))) )  ,
+       |         if(action_title in ('dd100001', 'jx200001','jx200175'), action_title, case when action_title = 'dd100002' then 'dd100001' when action_title = 'jx200184' then 'jx200001'  when action_title = 'jx200016' then 'jx200175' end),
+       |         put_date
      """.stripMargin
 
     spark.sql(sql)

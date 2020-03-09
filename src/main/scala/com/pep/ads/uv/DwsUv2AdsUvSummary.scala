@@ -231,7 +231,6 @@ object DwsUv2AdsUvSummary {
       """.stripMargin
 
     spark.sql(createSql)
-    spark.sql(s"alter table ads.ads_uv_increase drop if exists partition(count_date=${yestStr})")
     val insertSql =
       s"""
          |insert overwrite table ads.ads_uv_increase partition(count_date)

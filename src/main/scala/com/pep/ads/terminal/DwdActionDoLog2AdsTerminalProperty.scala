@@ -72,7 +72,9 @@ object DwdActionDoLog2AdsTerminalProperty {
       s"""
         |insert overwrite table ads.ads_terminal_property partition(count_date='${yesStr}')
         |select temp2.product_id,temp2.company,temp2.country,temp2.province,temp2.os_c,temp2.dpi_c,temp2.brand_c,temp2.machine_c,
-        |temp2.operator_c,temp2.connect_c,temp2.gid,temp2.cnt from
+        |case temp2.operator_c when '中国移动' then temp2.operator_c when '中国联通' then temp2.operator_c when '中国电信' then temp2.operator_c else '其他'  end
+        |,
+        |temp2.connect_c,temp2.gid,temp2.cnt from
         |(select temp1.gid,temp1.product_id,temp1.company,temp1.country,temp1.province,temp1.dpi_c,temp1.brand_c,temp1.machine_c,temp1.os_c,
         |temp1.operator_c,temp1.connect_c,row_number() over(partition by temp1.gid,
         |temp1.product_id,temp1.company,temp1.country,temp1.province order by temp1.cou desc) as rak,temp1.cou as cnt from

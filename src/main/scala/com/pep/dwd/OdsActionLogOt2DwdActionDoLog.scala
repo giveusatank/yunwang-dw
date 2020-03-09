@@ -135,6 +135,7 @@ object OdsActionLogOt2DwdActionDoLog {
          |         as t
          |where t.num = 1
        """.stripMargin
+    println(sql)
     spark.sql(sql)
 
   }
