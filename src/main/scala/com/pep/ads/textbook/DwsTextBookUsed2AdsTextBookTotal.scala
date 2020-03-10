@@ -150,6 +150,49 @@ object DwsTextBookUsed2AdsTextBookTotal {
       """.stripMargin
     spark.sql(sql_i3)
 
+    val sql_c4 =
+      """
+        |create table if not exists ads.ads_textbook_download_daily
+        |(
+        |    product_id            string,
+        |    company               string,
+        |    download_count        string,
+        |    user_count            string
+        |)
+        |    partitioned by (count_date string)
+        |stored as textfile
+      """.stripMargin
+
+    val sql_i4 =
+      s"""
+         |insert overwrite table ads.ads_textbook_download_daily partition(count_date)
+         |select product_id,company, count(action_title),count(distinct(device_id)), '$yesStr'
+         |from dwd.action_do_log where put_date ='$yesStr' and action_title in('jx200218','dd100009')
+         |group by product_id,company
+      """.stripMargin
+    spark.sql(sql_i4)
+
+    val sql_c5 =
+      """
+        |create table if not exists ads.ads_resource_used_daily
+        |(
+        |    product_id            string,
+        |    company               string,
+        |    action_count          string,
+        |    user_count            string
+        |)
+        |    partitioned by (count_date string)
+        |stored as textfile
+      """.stripMargin
+
+    val sql_i5 =
+      s"""
+         |insert overwrite table ads.ads_resource_used_daily partition(count_date)
+         |select product_id,company, count(action_title),count(distinct(device_id)), '$yesStr'
+         |from dwd.action_do_log where put_date ='$yesStr' and action_title in('jx200022','jx200305','jx200307')
+         |group by product_id,company
+      """.stripMargin
+    spark.sql(sql_i5)
   }
 
 
@@ -160,6 +203,7 @@ object DwsTextBookUsed2AdsTextBookTotal {
     props.setProperty("tableName_1","ads_textbook_used_total_cube")
     props.setProperty("tableName_2","ads_textbook_user_area")
     props.setProperty("tableName_3","ads_textbook_used_daily")
+    props.setProperty("tableName_4","ads_textbook_download_daily")
     props.setProperty("write_mode","Overwrite")
 
     //使用Ads库
@@ -193,6 +237,15 @@ object DwsTextBookUsed2AdsTextBookTotal {
 
     spark.sql(querySql_3).coalesce(5).write.mode("Append").
       jdbc(props.getProperty("url"),props.getProperty("tableName_3"),props)
+
+    val querySql_4 =
+      s"""
+         |select * from ads.ads_textbook_download_daily
+         |where count_date='${yesStr}'
+      """.stripMargin
+
+    spark.sql(querySql_4).coalesce(5).write.mode("Append").
+      jdbc(props.getProperty("url"),props.getProperty("tableName_4"),props)
 
 
 
