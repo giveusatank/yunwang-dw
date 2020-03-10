@@ -139,6 +139,54 @@ object DwsUv2AdsUvSummary {
 
   }
 
+
+  /**
+    * ads 每日uv pv统计
+    *
+    * @param spark
+    * @param yestStr
+    */
+  def dwsUvTotal2AdsUvTotalDaily(spark: SparkSession, yestStr: String): Unit = {
+    spark.sql("use ads")
+    val createSql =
+      """
+        |create table if not exists ads_uv_total_daily
+        |(
+        |    product_id    string,
+        |    company       string,
+        |    user_count    bigint,
+        |    action_count  bigint,
+        |    session_count bigint
+        |)
+        |    partitioned by (count_date string)
+        |    stored as textfile
+      """.stripMargin
+
+    spark.sql(createSql)
+    val insertSql =
+      s"""
+         |insert overwrite table ads.ads_uv_total_daily partition(count_date)
+         |select product_id,
+         |       company,
+         |       count(user_count)  as user_count,
+         |       sum(action_count)  as action_count,
+         |       sum(session_count) as session_count,
+         |       '$yestStr'
+         |from (
+         |         select product_id,
+         |                company,
+         |                count(1)           as user_count,
+         |                sum(action_count)  as action_count,
+         |                sum(session_count) as session_count
+         |         from dws.dws_uv_total
+         |         group by product_id, company, device_id)
+         |group by product_id, company
+      """.stripMargin
+
+    spark.sql(insertSql)
+
+  }
+
   /**
     * ads 每日uv pv统计
     *
@@ -429,6 +477,7 @@ object DwsUv2AdsUvSummary {
     props.setProperty("tableName_2", "ads_uv_increase")
     props.setProperty("tableName_3", "ads_uv_total")
     props.setProperty("tableName_33", "ads_uv_total_yq")
+    props.setProperty("tableName_333", "ads_uv_total_daily")
     props.setProperty("tableName_5", "ads_uv_incr_area_until_week_month")
     props.setProperty("tableName_6", "ads_uv_area_until_week_month")
     props.setProperty("tableName_7", "ads_active_reg_user")
@@ -479,6 +528,14 @@ object DwsUv2AdsUvSummary {
     spark.sql(querySql_33).coalesce(20).write.mode(props.getProperty("write_mode")).
       jdbc(props.getProperty("url"), props.getProperty("tableName_33"), props)
 
+    //ads_uv_total_daily
+    val querySql_333 =
+      s"""
+         |select * from ads.ads_uv_total_daily where count_date='${yesStr}'
+      """.stripMargin
+
+    spark.sql(querySql_333).coalesce(20).write.mode(props.getProperty("write_mode")).
+      jdbc(props.getProperty("url"), props.getProperty("tableName_333"), props)
 
     val querySql_5 =
       s"""
@@ -575,6 +632,7 @@ object DwsUv2AdsUvSummary {
 
     //2 历史累计的增量
     dwsUvTotal2AdsUvTotal(spark, todayStr)
+    dwsUvTotal2AdsUvTotalDaily(spark, todayStr)
     //2 疫情
     dwsUvTotal2AdsUvTotalYq(spark, todayStr)
 

@@ -115,6 +115,41 @@ object DwsTextBookUsed2AdsTextBookTotal {
       """.stripMargin
     spark.sql(sql_i2)
 
+
+    spark.sql("use ads")
+    val sql_c3 =
+      """
+        |create table if not exists ads.ads_textbook_used_daily
+        |(
+        |    product_id            string,
+        |    company               string,
+        |    sum_time_consume      string,
+        |    avg_time_consume      string,
+        |    start_action_count    string,
+        |    action_count          string,
+        |    user_count            string
+        |)
+        |    partitioned by (count_date string)
+        |stored as textfile
+      """.stripMargin
+
+    spark.sql(sql_c1)
+    spark.sql("use dws")
+    val sql_i3 =
+      s"""
+         |insert overwrite table ads.ads_textbook_used_daily partition(count_date)
+         |select product_id,company,
+         |sum(sum_time_consume)                           as sum_time_consume,
+         |round(sum(sum_time_consume) / sum(start_action_count),0) as avg_time_consume,
+         |sum(start_action_count)                         as start_action_count,
+         |sum(action_count)                               as action_count,
+         |sum(user_count)                     as user_count,
+         |'$yesStr'
+         |from dws.dws_textbook_used_daily where count_date='$yesStr'
+         |group by product_id,company
+      """.stripMargin
+    spark.sql(sql_i3)
+
   }
 
 
@@ -124,6 +159,7 @@ object DwsTextBookUsed2AdsTextBookTotal {
     val props = DbProperties.propScp
     props.setProperty("tableName_1","ads_textbook_used_total_cube")
     props.setProperty("tableName_2","ads_textbook_user_area")
+    props.setProperty("tableName_3","ads_textbook_used_daily")
     props.setProperty("write_mode","Overwrite")
 
     //使用Ads库
@@ -148,6 +184,15 @@ object DwsTextBookUsed2AdsTextBookTotal {
 
     spark.sql(querySql_2).coalesce(5).write.mode(props.getProperty("write_mode")).
       jdbc(props.getProperty("url"),props.getProperty("tableName_2"),props)
+
+    val querySql_3 =
+      s"""
+         |select * from ads.ads_textbook_used_daily
+         |where count_date='${yesStr}'
+      """.stripMargin
+
+    spark.sql(querySql_3).coalesce(5).write.mode("Append").
+      jdbc(props.getProperty("url"),props.getProperty("tableName_3"),props)
 
 
 
