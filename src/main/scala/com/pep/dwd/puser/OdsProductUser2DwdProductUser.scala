@@ -3,6 +3,7 @@ package com.pep.dwd.puser
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Date}
 
+import com.pep.common.Constants
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
@@ -16,6 +17,7 @@ object OdsProductUser2DwdProductUser {
   def main(args: Array[String]): Unit = {
 
     val conf = new SparkConf().setAppName("RUN-OdsProductUser2DwdProductUser")
+    conf.set("spark.sql.shuffle.partitions", Constants.dws_shuffle_partitions)
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     val loop = new Breaks
     val regPatten = "^[0-9]{8}$".r

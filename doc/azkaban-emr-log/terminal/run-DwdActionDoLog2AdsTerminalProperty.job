@@ -3,10 +3,10 @@ type=command
 command=sh spark-submit \
  --master yarn \
  --deploy-mode cluster \
- --num-executors 5 \
- --executor-memory 32G \
+ --num-executors 10 \
+ --executor-memory 8G \
  --driver-memory 2G \
- --executor-cores 8 \
+ --executor-cores 4 \
  --queue dwq \
  --conf spark.yarn.maxAppAttempts=0 \
  --class com.pep.ads.terminal.DwdActionDoLog2AdsTerminalProperty \

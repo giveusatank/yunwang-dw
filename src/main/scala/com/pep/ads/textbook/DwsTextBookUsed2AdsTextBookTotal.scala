@@ -204,6 +204,7 @@ object DwsTextBookUsed2AdsTextBookTotal {
     props.setProperty("tableName_2","ads_textbook_user_area")
     props.setProperty("tableName_3","ads_textbook_used_daily")
     props.setProperty("tableName_4","ads_textbook_download_daily")
+    props.setProperty("tableName_5","ads_resource_used_daily")
     props.setProperty("write_mode","Overwrite")
 
     //使用Ads库
@@ -246,6 +247,15 @@ object DwsTextBookUsed2AdsTextBookTotal {
 
     spark.sql(querySql_4).coalesce(5).write.mode("Append").
       jdbc(props.getProperty("url"),props.getProperty("tableName_4"),props)
+
+    val querySql_5 =
+      s"""
+         |select * from ads.ads_resource_used_daily
+         |where count_date='${yesStr}'
+      """.stripMargin
+
+    spark.sql(querySql_5).coalesce(5).write.mode("Append").
+      jdbc(props.getProperty("url"),props.getProperty("tableName_5"),props)
 
 
 

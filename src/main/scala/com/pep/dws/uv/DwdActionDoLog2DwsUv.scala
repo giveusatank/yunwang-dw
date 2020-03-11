@@ -167,32 +167,32 @@ object DwdActionDoLog2DwsUv {
     spark.sql(createSql)
 
     //1.插入增量数据
-//    val insertSql =
-//      s"""
-//         |insert overwrite table dws.dws_uv_total
-//         |select product_id,
-//         |       company,
-//         |       split(max(concat(last_access_time, '-', remote_addr)), '-')[1] as last_remote_addr,
-//         |       split(max(concat(last_access_time, '-', country)), '-')[1] as last_country,
-//         |       split(max(concat(last_access_time, '-', province)), '-')[1] as last_province ,
-//         |       split(max(concat(last_access_time, '-', city)), '-')[1] as last_city,
-//         |       split(max(concat(last_access_time, '-', location)), '-')[1] as last_location,
-//         |       split(max(concat(last_access_time, '-', region)), '-')[1] as last_region,
-//         |       active_user,
-//         |       device_id,
-//         |       min(first_access_time)                                         as first_access_time,
-//         |       max(last_access_time)                                          as last_access_time,
-//         |       sum(action_count)                                              as action_count,
-//         |       sum(session_count)                                             as session_count,
-//         |       sum(launch_used_time)                                          as action_count,
-//         |       sum(launch_count)                                              as session_count,
-//         |       '$yestStr'
-//         |from dws.dws_uv_daily
-//         |group by product_id, company, active_user, device_id
-//      """.stripMargin
-//
-//    spark.sql(insertSql)
+    val insertSql =
+      s"""
+         |insert overwrite table dws.dws_uv_total
+         |select product_id,
+         |       company,
+         |       split(max(concat(last_access_time, '-', remote_addr)), '-')[1] as last_remote_addr,
+         |       split(max(concat(last_access_time, '-', country)), '-')[1] as last_country,
+         |       split(max(concat(last_access_time, '-', province)), '-')[1] as last_province ,
+         |       split(max(concat(last_access_time, '-', city)), '-')[1] as last_city,
+         |       split(max(concat(last_access_time, '-', location)), '-')[1] as last_location,
+         |       split(max(concat(last_access_time, '-', region)), '-')[1] as last_region,
+         |       active_user,
+         |       device_id,
+         |       min(first_access_time)                                         as first_access_time,
+         |       max(last_access_time)                                          as last_access_time,
+         |       sum(action_count)                                              as action_count,
+         |       sum(session_count)                                             as session_count,
+         |       sum(launch_used_time)                                          as action_count,
+         |       sum(launch_count)                                              as session_count,
+         |       '$yestStr'
+         |from dws.dws_uv_daily
+         |group by product_id, company, active_user, device_id
+      """.stripMargin
 
+    spark.sql(insertSql)
+/*
     //1.插入增量数据
     val insertSql =
       s"""
@@ -268,7 +268,7 @@ object DwdActionDoLog2DwsUv {
       """.stripMargin
     spark.sql(dropSql)
 
-
+**/
 
   }
 
@@ -331,7 +331,8 @@ object DwdActionDoLog2DwsUv {
 
 
   def main(args: Array[String]): Unit = {
-    val conf = new SparkConf().setAppName("JOB-DwdActionDoLog2DwsUV").set("spark.sql.shuffle.partitions", Constants.dws_shuffle_partitions)
+    val conf = new SparkConf().setAppName("JOB-DwdActionDoLog2DwsUV")
+      .set("spark.sql.shuffle.partitions", Constants.dws_shuffle_partitions)
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     //获取今日、昨天的日期
     val format = new SimpleDateFormat("yyyyMMdd")

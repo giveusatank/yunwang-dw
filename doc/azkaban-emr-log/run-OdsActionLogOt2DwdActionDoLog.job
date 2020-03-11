@@ -6,7 +6,7 @@ command=sh spark-submit \
  --num-executors 8 \
  --executor-memory 32G \
  --driver-memory 2G \
- --executor-cores 8 \
+ --executor-cores 10 \
  --conf spark.yarn.maxAppAttempts=0 \
  --queue dwq \
  --class com.pep.dwd.OdsActionLogOt2DwdActionDoLog \
