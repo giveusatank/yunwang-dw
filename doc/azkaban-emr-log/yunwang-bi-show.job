@@ -1,6 +1,6 @@
 #yunwang-bi-show.job
 type=command
-command=java -jar /root/pep_job/yunwang-dw-bi-show-1.0-SNAPSHOT.jar
+command=java -cp :/root/pep-job/postgresql-42.2.5.jar:/root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar com.pep.bi.YunwangDwBiShowDate
 dependencies=yunwangdw-daily-paper
 notify.emails=zhangfz@pep.com.cn
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir
