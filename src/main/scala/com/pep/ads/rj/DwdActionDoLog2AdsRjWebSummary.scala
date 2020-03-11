@@ -361,8 +361,8 @@ object DwdActionDoLog2AdsRjWebSummary {
 
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setAppName("JOB-DwdActionDoLog2AdsRjWebSummary").set("spark.sql.shuffle.partitions", Constants.ads_shuffle_partitions)
+    conf.set("spark.sql.autoBroadcastJoinThreshold", "-1")//禁止广播
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
-
     val arrLength = args.length
     val withParam = if (args.length > 0) true else false
     val regPattern = "^[0-9]{8}$".r

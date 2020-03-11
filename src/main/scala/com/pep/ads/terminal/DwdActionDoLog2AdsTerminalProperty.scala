@@ -16,6 +16,7 @@ object DwdActionDoLog2AdsTerminalProperty {
 
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setAppName("RUN-DwdActionDoLog2AdsTerminalProperty")
+    conf.set("spark.sql.autoBroadcastJoinThreshold", "-1")//禁止广播
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     val loop = new Breaks
     val regPatten = "^[0-9]{8}$".r

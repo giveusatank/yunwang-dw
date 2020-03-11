@@ -579,6 +579,7 @@ object DwsUv2AdsUvSummary {
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setAppName("AdsUvSummary").set("spark.sql.shuffle.partitions", Constants.ads_shuffle_partitions)
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
+    conf.set("spark.sql.autoBroadcastJoinThreshold", "-1")//禁止广播
     //获取今日、昨天的日期
     val format = new SimpleDateFormat("yyyyMMdd")
     var withoutParameter = true

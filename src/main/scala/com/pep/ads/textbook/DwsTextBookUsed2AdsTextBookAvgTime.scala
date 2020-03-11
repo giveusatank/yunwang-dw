@@ -174,6 +174,9 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
 
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setAppName("DwsTextBookUsed2AdsTextBookAvgTime").set("spark.sql.shuffle.partitions", Constants.ads_shuffle_partitions)
+    //conf.set("spark.sql.broadcastTimeout", "1800")//广播超时时间延长至半小时
+    conf.set("spark.sql.autoBroadcastJoinThreshold", "-1")//禁止广播
+    //禁止小表广播。龚波
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     //获取今日、昨天的日期
     val format = new SimpleDateFormat("yyyyMMdd")

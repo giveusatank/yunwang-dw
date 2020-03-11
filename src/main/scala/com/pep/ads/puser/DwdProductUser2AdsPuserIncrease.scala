@@ -3,7 +3,7 @@ package com.pep.ads.puser
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Date}
 
-import com.pep.common.DbProperties
+import com.pep.common.{Constants, DbProperties}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
@@ -14,6 +14,8 @@ object DwdProductUser2AdsPuserIncrease {
   def main(args: Array[String]): Unit = {
 
     val conf = new SparkConf().setAppName("RUN-DwdProductUser2AdsPuserIncrease")
+    conf.set("spark.sql.autoBroadcastJoinThreshold", "-1")//禁止广播
+    conf.set("spark.sql.shuffle.partitions", Constants.ads_shuffle_partitions)
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     val loop = new Breaks
     val regPatten = "^[0-9]{8}$".r

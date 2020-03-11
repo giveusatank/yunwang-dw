@@ -184,7 +184,7 @@ object DwsTextBookUsed2AdsTextBookTotal {
         |    partitioned by (count_date string)
         |stored as textfile
       """.stripMargin
-
+    spark.sql(sql_c5)
     val sql_i5 =
       s"""
          |insert overwrite table ads.ads_resource_used_daily partition(count_date)
@@ -264,7 +264,7 @@ object DwsTextBookUsed2AdsTextBookTotal {
 
     val conf = new SparkConf().setAppName("JOB-DwsTextBookTotal2AdsTextBookTotal").set("spark.sql.shuffle.partitions", Constants.ads_shuffle_partitions)
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
-
+    conf.set("spark.sql.autoBroadcastJoinThreshold", "-1")//禁止广播
     //获取昨日日期
     val format = new SimpleDateFormat("yyyyMMdd")
     val cal = Calendar.getInstance();
