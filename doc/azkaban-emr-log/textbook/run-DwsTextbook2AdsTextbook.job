@@ -6,7 +6,7 @@ command=sh spark-submit \
  --num-executors 10 \
  --executor-memory 8G \
  --driver-memory 2G \
- --executor-cores 4 \
+ --executor-cores 8 \
  --queue dwq \
  --conf spark.yarn.maxAppAttempts=0 \
  --conf spark.yarn.executor.memoryOverhead=6000 \
