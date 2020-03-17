@@ -439,24 +439,44 @@ object DwsUv2AdsUvSummary {
   def writeDwsUvTotal2AdsActiveRegUser(spark: SparkSession, now: String, lastMonth: String, lastHalfYear: String) = {
 
     spark.sql("use ads")
+
     val format = new SimpleDateFormat("yyyyMMdd")
+    val cal = Calendar.getInstance()
+    cal.setTime(format.parse(now))
+    cal.add(Calendar.DATE,+1)
+
     val last_mon_st = format.parse(lastMonth).getTime
     val half_year_st = format.parse(lastHalfYear).getTime
     val last_day_st = format.parse(now).getTime
+    val next_day = cal.getTime.getTime
 
+    /*val etlSql =
+      s"""
+         |insert overwrite table ads.ads_active_reg_user partition(count_date='${now}')
+         |select * from
+         |(select product_id as pp,company,country,province,'last_month',count(distinct(active_user)) as uv
+         |from dws.dws_uv_total where last_access_time>='${last_mon_st}' and last_access_time<='${last_day_st}'
+         |and nvl(active_user,'')!='' group by product_id,company,country,province) union all
+         |(select product_id as pp2,company as ddd,country,province,'half_year',count(distinct(active_user)) as uv
+         |from dws.dws_uv_total where last_access_time>='${half_year_st}' and last_access_time<='${last_day_st}'
+         |and nvl(active_user,'')!='' group by product_id,company,country,province) union all
+         |(select product_id as pp2,company as ddd,country,province,'today',count(distinct(active_user)) as uv
+         |from dws.dws_uv_total where last_access_time>='${last_day_st}' and last_access_time<='${next_day}'
+         |and nvl(active_user,'')!='' group by product_id,company,country,province)
+    """.stripMargin*/
 
     val etlSql =
       s"""
          |insert overwrite table ads.ads_active_reg_user partition(count_date='${now}')
          |select * from
          |(select product_id as pp,company,country,province,'last_month',count(distinct(active_user)) as uv
-         |from dws.dws_uv_total where last_access_time>='${last_mon_st}'
+         |from dws.dws_uv_daily where last_access_time>='${last_mon_st}' and last_access_time<='${last_day_st}'
          |and nvl(active_user,'')!='' group by product_id,company,country,province) union all
          |(select product_id as pp2,company as ddd,country,province,'half_year',count(distinct(active_user)) as uv
-         |from dws.dws_uv_total where last_access_time>='${half_year_st}'
+         |from dws.dws_uv_daily where last_access_time>='${half_year_st}' and last_access_time<='${last_day_st}'
          |and nvl(active_user,'')!='' group by product_id,company,country,province) union all
          |(select product_id as pp2,company as ddd,country,province,'today',count(distinct(active_user)) as uv
-         |from dws.dws_uv_total where last_access_time>='${last_day_st}'
+         |from dws.dws_uv_daily where last_access_time>='${last_day_st}' and last_access_time<='${next_day}'
          |and nvl(active_user,'')!='' group by product_id,company,country,province)
     """.stripMargin
     spark.sql(etlSql)
