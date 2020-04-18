@@ -9,6 +9,7 @@ command=sh spark-submit \
  --executor-cores 4 \
  --queue dwq \
  --conf spark.yarn.maxAppAttempts=0 \
+ --conf spark.yarn.executor.memoryOverhead=6000 \
  --class com.pep.dws.textbook.DwdActionDoLog2DwsTextBookTotal  \
  /root/pep-job/yunwang-dw-1.0-SNAPSHOT.jar
 working.dir=/usr/local/azkaban/azkaban_work_dir/working_dir

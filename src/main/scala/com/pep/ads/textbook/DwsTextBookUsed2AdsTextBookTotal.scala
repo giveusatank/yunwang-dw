@@ -53,7 +53,7 @@ object DwsTextBookUsed2AdsTextBookTotal {
          |count(distinct (user_id))                       as user_count,
          |grouping_id()                                   as gid,
          |'$yesStr'                                      as count_date
-         |from dws.dws_textbook_used_total_wide where country='中国'
+         |from dws.dws_textbook_used_total where country='中国' and count_date='$yesStr'
          |group by product_id,company,province,passive_obj,rkxd,zxxkc,nj
          |grouping sets(
          |(product_id,company,province,rkxd),
@@ -104,7 +104,7 @@ object DwsTextBookUsed2AdsTextBookTotal {
          |sum(action_count) as action_count,
          |grouping_id()                           as gid,
          |'$yesStr'
-         |from dws.dws_textbook_used_total where country='中国'
+         |from dws.dws_textbook_used_total where country='中国' and count_date='$yesStr'
          |group by product_id,company,province
          |grouping sets(
          |(product_id,company,province),

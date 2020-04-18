@@ -37,8 +37,10 @@ object DwdActionDoLog2DwsTextBookTotal {
       |    avg_time_consume   bigint,
       |    start_action       string,
       |    start_action_count bigint,
-      |    action_count       bigint
-      |) partitioned by (count_date bigint)
+      |    action_count       bigint,
+      |    first_access_time  string,
+      |    last_access_time   string
+      |) partitioned by (count_date string)
       |    stored as parquet
     """.stripMargin
     spark.sql(_sql1)
@@ -53,8 +55,8 @@ object DwdActionDoLog2DwsTextBookTotal {
        |       split(max(concat(start_time, '-', country)), '-')[1] as country,
        |       split(max(concat(start_time, '-', province)), '-')[1] as province ,
        |       split(max(concat(start_time, '-', city)), '-')[1] as city,
-       |       split(max(concat(start_time, '-', location)), '-')[1] as location,
-       |       if(active_user != '', active_user, device_id),
+       |       '' as location,
+       |       max(active_user),
        |       device_id,
        |       group_id,
        |       dws.yunwangdateformat('tbid', if(locate('[Id:{',passive_obj)>0,substr(passive_obj, 6,locate('}',passive_obj)-6),if(locate(',', passive_obj) > 0, split(passive_obj, ',')[1], if(instr(passive_obj,'{')=1,substring(passive_obj,2,13),passive_obj))) )                    as passive_obj,
@@ -65,16 +67,15 @@ object DwdActionDoLog2DwsTextBookTotal {
        |       if(action_title in ('dd100001', 'jx200001','jx200175'), action_title, case when action_title = 'dd100002' then 'dd100001' when action_title = 'jx200184' then 'jx200001' when action_title = 'jx200016' then 'jx200175' end)              as start_action,
        |       sum(if(action_title in ('dd100001', 'jx200001','jx200175'), 1, 0))                                                                                                                         as start_action_count,
        |       count(1)                                                                                                                                                                        as action_count,
+       |       min(start_time) as first_access_time,
+       |       max(start_time) as last_access_time,
        |       put_date
        |from dwd.action_do_log
        |where put_date = '${yesStr}'
        |  and action_title in ('dd100001', 'dd100002', 'jx200001', 'jx200184','jx200175','jx200016')
        |  and group_id != ''
        |  and country='中国'
-       |  and not (active_user = '' and device_id = 'null')
-       |  and not (active_user = '' and device_id is null)
-       |  and not (active_user = '' and device_id = '')
-       |group by product_id, dws.yunwangDateFormat('company',company), active_user, device_id, group_id,
+       |group by product_id, dws.yunwangDateFormat('company',company),country,province,city, device_id, group_id,
        |         dws.yunwangdateformat('tbid', if(locate('[Id:{',passive_obj)>0,substr(passive_obj, 6,locate('}',passive_obj)-6),if(locate(',', passive_obj) > 0, split(passive_obj, ',')[1], if(instr(passive_obj,'{')=1,substring(passive_obj,2,13),passive_obj))) )  ,
        |         if(action_title in ('dd100001', 'jx200001','jx200175'), action_title, case when action_title = 'dd100002' then 'dd100001' when action_title = 'jx200184' then 'jx200001'  when action_title = 'jx200016' then 'jx200175' end),
        |         put_date
@@ -101,13 +102,21 @@ object DwdActionDoLog2DwsTextBookTotal {
         |    city               string,
         |    location           string,
         |    passive_obj        string,
+        |    zxxkc              string,
+        |    nj                 string,
+        |    fascicule          string,
+        |    rkxd               string,
+        |    year               string,
+        |    publisher          string,
         |    sum_time_consume   bigint,
         |    avg_time_consume   bigint,
         |    start_action       string,
         |    start_action_count bigint,
         |    action_count       bigint,
-        |    user_count         bigint
-        |) partitioned by (count_date bigint) stored as parquet
+        |    user_count         bigint,
+        |    first_access_time string,
+        |    last_access_time string
+        |) partitioned by (count_date string) stored as parquet
       """.stripMargin
     spark.sql(sql)
     //将dws_textbook_used_session表中的数据清洗到dws_textbook_used_daily表
@@ -116,28 +125,36 @@ object DwdActionDoLog2DwsTextBookTotal {
          |insert overwrite table dws_textbook_used_daily partition (count_date)
          |select product_id,
          |       company,
-         |       country,
-         |       province,
-         |       city,
-         |       location,
+         |       split(max(concat(last_access_time, '-', country)), '-')[1] as country,
+         |       split(max(concat(last_access_time, '-', province)), '-')[1] as province ,
+         |       split(max(concat(last_access_time, '-', city)), '-')[1] as city,
+         |       '',
          |       passive_obj,
+         |       dws.getEduCode(passive_obj, 'zxxkc'),
+         |       dws.getEduCode(passive_obj, 'nj'),
+         |       dws.getEduCode(passive_obj, 'fascicule'),
+         |       dws.getEduCode(passive_obj, 'rkxd'),
+         |       dws.getEduCode(passive_obj, 'year'),
+         |       dws.getEduCode(passive_obj, 'publisher'),
          |       sum(sum_time_consume),
          |       sum(sum_time_consume) / sum(start_action_count),
          |       start_action,
          |       sum(start_action_count),
          |       sum(action_count)         as pv,
          |       count(distinct (user_id)) as uv,
+         |       min(first_access_time) as first_access_time,
+         |       max(last_access_time) as last_access_time,
          |       count_date
          |from dws_textbook_used_session
-         |where count_date = '${yesStr}'
-         |group by count_date, start_action, product_id, company, country, province, city, location, passive_obj
+         |where count_date = '${yesStr}' and nvl(user_id,'')!=''
+         |group by count_date, start_action, product_id, company, country, province, city, passive_obj
       """.stripMargin
 
     spark.sql(sql1)
   }
 
   //方法3：将DwsTextBookUsedSession洗到DwsTextBookUsedTotal中（用户对于教材的历史使用情况）
-  def writeDwsTextBookUsedSession2DwsTextBookUsedTotal(spark: SparkSession, yesStr: String,_7DaysBefore:String): Unit = {
+  def writeDwsTextBookUsedSession2DwsTextBookUsedTotal(spark: SparkSession, yesStr: String,_7DaysBefore:String,theDayBeforeYesterday:String): Unit = {
 
     //使用dws数据库
     spark.sql("use dws")
@@ -155,13 +172,20 @@ object DwdActionDoLog2DwsTextBookTotal {
          |    location           string,
          |    user_id            string,
          |    passive_obj        string,
+         |    zxxkc              string,
+         |    nj                 string,
+         |    fascicule          string,
+         |    rkxd               string,
+         |    year               string,
+         |    publisher          string,
          |    sum_time_consume   bigint,
          |    avg_time_consume   bigint,
          |    start_action       string,
          |    start_action_count bigint,
          |    action_count       bigint,
-         |    count_date         bigint
-         |) stored as parquet
+         |    first_access_time  string,
+         |    last_access_time   string
+         |) partitioned by (count_date string) stored as parquet
       """.stripMargin
     spark.sql(sql)
 
@@ -173,16 +197,52 @@ object DwdActionDoLog2DwsTextBookTotal {
          |       country,
          |       province,
          |       city,
-         |       location,
+         |       '',
          |       user_id,
          |       passive_obj,
+         |       dws.getEduCode(passive_obj, 'zxxkc'),
+         |       dws.getEduCode(passive_obj, 'nj'),
+         |       dws.getEduCode(passive_obj, 'fascicule'),
+         |       dws.getEduCode(passive_obj, 'rkxd'),
+         |       dws.getEduCode(passive_obj, 'year'),
+         |       dws.getEduCode(passive_obj, 'publisher'),
          |       sum(sum_time_consume),
          |       sum(sum_time_consume) / sum(start_action_count),
          |       start_action,
          |       sum(start_action_count),
-         |       sum(action_count) as pv,
-         |       ${yesStr}
-         |from dws_textbook_used_session
+         |       sum(action_count) as action_count,
+         |       min(first_access_time) as first_access_time,
+         |       max(last_access_time) as last_access_time,
+         |       '${yesStr}'
+         |from (
+         |select
+         |    product_id        ,
+         |    company           ,
+         |    country           ,
+         |    province          ,
+         |    city              ,
+         |    ''       as location   ,
+         |    user_id           ,
+         |    passive_obj       ,
+         |    dws.getEduCode(passive_obj, 'zxxkc') as zxxkc,
+         |    dws.getEduCode(passive_obj, 'nj') as nj,
+         |    dws.getEduCode(passive_obj, 'fascicule') as fascicule,
+         |    dws.getEduCode(passive_obj, 'rkxd') as rkxd,
+         |    dws.getEduCode(passive_obj, 'year') as year,
+         |    dws.getEduCode(passive_obj, 'publisher') as publisher,
+         |    sum(sum_time_consume) as sum_time_consume,
+         |    sum(sum_time_consume) / sum(start_action_count),
+         |    start_action,
+         |    sum(start_action_count) as start_action_count,
+         |    sum(action_count) as action_count,
+         |    min(first_access_time) as first_access_time,
+         |    max(last_access_time) as last_access_time,
+         |    '${yesStr}' as count_date
+         |    from dws_textbook_used_session
+         |    where count_date = '${yesStr}' and nvl(user_id,'')!=''
+         |    group by product_id, company, country, province, city,location,user_id, passive_obj, start_action
+         | UNION ALL
+         | select * from dws_textbook_used_total where count_date='${theDayBeforeYesterday}')
          |group by start_action, count_date, product_id, company, country, province, city, location, passive_obj, user_id
          """.stripMargin
     spark.sql(sql1)
@@ -254,74 +314,113 @@ object DwdActionDoLog2DwsTextBookTotal {
     spark.sql(sql5)*/
   }
 
-  //方法4：将DwsTextBookUsedTotal按照学科相关维度展开形成宽表
-  def convertDwsTextBookUsedTotal2DwsTextBookUsedTotalWidth(spark: SparkSession) = {
+  //新增用户
+  def writeDwsTextBookUsed2DwsTextBookUsedIncrease(spark: SparkSession, yesStr: String): Unit = {
 
     //使用dws数据库
     spark.sql("use dws")
 
-    //创建dws_textbook_used_kc_T
+    //创建dws_textbook_used_daily表
+    val sql =
+      """
+        |create table if not exists dws_textbook_used_increase
+        |(
+        |    product_id         string,
+        |    company            string,
+        |    country            string,
+        |    province           string,
+        |    city               string,
+        |    location           string,
+        |    user_id            string,
+        |    passive_obj        string,
+        |    zxxkc              string,
+        |    nj                 string,
+        |    fascicule          string,
+        |    rkxd               string,
+        |    year               string,
+        |    publisher          string,
+        |    sum_time_consume   bigint,
+        |    avg_time_consume   bigint,
+        |    start_action       string,
+        |    start_action_count bigint,
+        |    action_count       bigint,
+        |    first_access_time  string,
+        |    last_access_time   string
+        |) partitioned by (count_date string) stored as parquet
+      """.stripMargin
+    spark.sql(sql)
+    //将dws_textbook_used_session表中的数据清洗到dws_textbook_used_daily表
     val sql1 =
       s"""
-         |create table if not exists dws_textbook_used_total_wide
-         |(
-         |    product_id         string,
-         |    company            string,
-         |    country            string,
-         |    province           string,
-         |    city               string,
-         |    location           string,
-         |    passive_obj        string,
-         |    zxxkc              string,
-         |    nj                 string,
-         |    fascicule_name     string,
-         |    rkxd               string,
-         |    year               string,
-         |    publisher          string,
-         |    user_id            string,
-         |    sum_time_consume   bigint,
-         |    avg_time_consume   bigint,
-         |    action_count       bigint,
-         |    start_action_count bigint,
-         |    start_action       string,
-         |    count_date         bigint
-         |) stored as parquet
+         |insert overwrite table dws_textbook_used_increase partition (count_date)
+         |select * from dws_textbook_used_total
+         |where count_date = '${yesStr}' and from_unixtime(cast(substring(first_access_time, 1, 10) as bigint), 'yyyyMMdd') = '${yesStr}'
+
       """.stripMargin
+
     spark.sql(sql1)
-
-    //将dws_textbook_user_total这张表中教材转换为课程，然后插入dws_textbook_used_total_wide
-    // dws.getEduCode(passive_obj,'zxxkc')
-    val sql2 =
-    s"""
-       |insert overwrite table dws_textbook_used_total_wide
-       |select product_id,
-       |       company,
-       |       country,
-       |       province,
-       |       city,
-       |       location,
-       |       passive_obj,
-       |       dws.getEduCode(passive_obj, 'zxxkc'),
-       |       dws.getEduCode(passive_obj, 'nj'),
-       |       dws.getEduCode(passive_obj, 'fascicule'),
-       |       dws.getEduCode(passive_obj, 'rkxd'),
-       |       dws.getEduCode(passive_obj, 'year'),
-       |       dws.getEduCode(passive_obj, 'publisher'),
-       |       user_id,
-       |       sum_time_consume,
-       |       avg_time_consume,
-       |       action_count,
-       |       start_action_count,
-       |       start_action,
-       |       count_date
-       |from dws_textbook_used_total
-      """.stripMargin
-    spark.sql(sql2)
-
   }
 
-  def doAction(spark: SparkSession, yesStr: String, todayStr: String, _7DaysBefore: String) = {
+  //教材下载
+  def writeDwsTextBookUsed2DwsTextBookDownloadDaily(spark: SparkSession, yesStr: String): Unit = {
 
+    //使用dws数据库
+    spark.sql("use dws")
+
+    //创建dws_textbook_used_daily表
+    val sql =
+      """
+        |create table if not exists dws_textbook_download_daily
+        |(
+        |    product_id         string,
+        |    company            string,
+        |    country            string,
+        |    province           string,
+        |    city               string,
+        |    location           string,
+        |    passive_obj        string,
+        |    zxxkc              string,
+        |    nj                 string,
+        |    fascicule          string,
+        |    rkxd               string,
+        |    year               string,
+        |    publisher          string,
+        |    download_count   bigint,
+        |    user_count   bigint
+        |) partitioned by (count_date string) stored as parquet
+      """.stripMargin
+    spark.sql(sql)
+    //将dws_textbook_used_session表中的数据清洗到dws_textbook_used_daily表
+    val sql1 =
+      s"""
+         |insert overwrite table dws.dws_textbook_download_daily partition(count_date)
+         |select
+         |product_id,
+         |company,
+         |country,
+         |province,
+         |city,
+         |'',
+         |passive_obj,
+         |dws.getEduCode(passive_obj, 'zxxkc'),
+         |dws.getEduCode(passive_obj, 'nj'),
+         |dws.getEduCode(passive_obj, 'fascicule'),
+         |dws.getEduCode(passive_obj, 'rkxd'),
+         |dws.getEduCode(passive_obj, 'year'),
+         |dws.getEduCode(passive_obj, 'publisher'),
+         |count(action_title),
+         |count(distinct(active_user)),
+         |'$yesStr'
+         |from dwd.action_do_log where put_date ='$yesStr' and action_title in('jx200218','dd100009')
+         |group by product_id,company,country,province,city,passive_obj
+
+      """.stripMargin
+
+    spark.sql(sql1)
+  }
+
+  def doAction(spark: SparkSession, yesStr: String, todayStr: String, _7DaysBefore: String,theDayBeforeYesterday:String) = {
+    println(yesStr)
     //方法1：将ActionDoLog数据洗到dws_textbook_used_session（会话粒度）
     writeActionDoLog2DwsTextBookUsedSession(spark, yesStr)
 
@@ -329,10 +428,13 @@ object DwdActionDoLog2DwsTextBookTotal {
     writeDwsTextBookUsed2DwsTextBookUsedDaily(spark, yesStr)
 
     //方法3：将DwsTextBookUsedSession洗到DwsTextBookUsedTotal中（用户对于教材的历史使用情况）
-    writeDwsTextBookUsedSession2DwsTextBookUsedTotal(spark, yesStr,_7DaysBefore)
+    writeDwsTextBookUsedSession2DwsTextBookUsedTotal(spark, yesStr,_7DaysBefore,theDayBeforeYesterday)
 
-    //方法4：将DwsTextBookUsedTotal按照学科相关维度展开形成宽表
-    convertDwsTextBookUsedTotal2DwsTextBookUsedTotalWidth(spark)
+    //新增用户设置
+    writeDwsTextBookUsed2DwsTextBookUsedIncrease(spark, yesStr)
+
+    //教材下载
+    writeDwsTextBookUsed2DwsTextBookDownloadDaily(spark, yesStr)
   }
 
   def main(args: Array[String]): Unit = {
@@ -362,9 +464,11 @@ object DwdActionDoLog2DwsTextBookTotal {
           cal.add(Calendar.DATE, 1)
         }
         val yesStr: String = format.format(cal.getTime)
-        cal.add(Calendar.DATE, -6)
+        cal.add(Calendar.DATE, -1)
+        val theDayBeforeYesterday: String = format.format(cal.getTime)
+        cal.add(Calendar.DATE, -5)
         val _7DaysBefore: String = format.format(cal.getTime)
-        doAction(spark,yesStr,todayStr,_7DaysBefore)
+        doAction(spark,yesStr,todayStr,_7DaysBefore,theDayBeforeYesterday)
       }
     }
     spark.stop()

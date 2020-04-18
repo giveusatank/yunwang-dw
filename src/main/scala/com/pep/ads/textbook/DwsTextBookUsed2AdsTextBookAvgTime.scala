@@ -44,7 +44,7 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
          |insert overwrite table ads.ads_textbook_used_avg_time_consume partition(data_type,count_date)
          |select t.product_id,t.company,t.province,'',t.nj,cast(sum(t.sum_time_consume) as decimal(32,0)) as sum_time_consume,cast(sum(t.start_action_count) as decimal(32,0)) as start_action_count,cast(sum(t.sum_time_consume)/sum(t.start_action_count) as decimal(32,0)) as avg_time_consume,'nj',${yestStr} from (
          |select product_id,company,user_id,sum(sum_time_consume) sum_time_consume,sum(start_action_count) as start_action_count,nj ,province
-         |from dws.dws_textbook_used_total_wide where count_date>='${ysList.get(0)}' and count_date<='${ysList.get(1)}' and country='中国'
+         |from dws.dws_textbook_used_total where count_date>='${ysList.get(0)}' and count_date<='${ysList.get(1)}' and country='中国'
          | group by user_id,nj,province,product_id,company) t join
          |(select user_id from dwd.dwd_order_related_width where pay_time>='${ysList.get(0)}' and pay_time<='${ysList.get(1)}' group by user_id) t1
          |on t.user_id=t1.user_id group by t.nj,t.province,t.product_id,t.company
@@ -55,7 +55,7 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
          |insert overwrite table ads.ads_textbook_used_avg_time_consume partition(data_type,count_date)
          |select t.product_id,t.company,t.province,t.zxxkc,'',cast(sum(t.sum_time_consume) as decimal(32,0)) as sum_time_consume,cast(sum(t.start_action_count) as decimal(32,0)) as start_action_count,cast(sum(t.sum_time_consume)/sum(t.start_action_count) as decimal(32,0)) as avg_time_consume,'zxxkc',${yestStr} from (
          |select product_id,company,user_id,sum(sum_time_consume) sum_time_consume,sum(start_action_count) as start_action_count,zxxkc ,province
-         |from dws.dws_textbook_used_total_wide where count_date>='${ysList.get(0)}' and count_date<='${ysList.get(1)}' and country='中国'
+         |from dws.dws_textbook_used_total where count_date>='${ysList.get(0)}' and count_date<='${ysList.get(1)}' and country='中国'
          | group by user_id,zxxkc,province,product_id,company) t join
          |(select user_id from dwd.dwd_order_related_width where pay_time>='${ysList.get(0)}' and pay_time<='${ysList.get(1)}' group by user_id) t1
          |on t.user_id=t1.user_id group by t.zxxkc,t.province,t.product_id,t.company
@@ -68,7 +68,7 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
          |cast(sum(t.start_action_count) as decimal(32,0)) as start_action_count,
          |cast(sum(t.sum_time_consume)/sum(t.start_action_count) as decimal(32,0)) as avg_time_consume,grouping_id() as gid from (
          |select product_id,company,user_id,sum(sum_time_consume) sum_time_consume,sum(start_action_count) as start_action_count,zxxkc ,nj,province
-         |from dws.dws_textbook_used_total_wide where count_date>='${ysList.get(0)}' and count_date<='${ysList.get(1)}' and country='中国'
+         |from dws.dws_textbook_used_total where count_date='${yestStr}' and country='中国'
          | group by user_id,zxxkc,nj,province,product_id,company) t join
          |(select user_id from dwd.dwd_order_related_width where pay_time>='${ysList.get(0)}' and pay_time<='${ysList.get(1)}' group by user_id) t1
          |on t.user_id=t1.user_id group by t.product_id,t.company,t.province,t.zxxkc,t.nj
@@ -176,7 +176,7 @@ object DwsTextBookUsed2AdsTextBookAvgTime {
     val conf = new SparkConf().setAppName("DwsTextBookUsed2AdsTextBookAvgTime").set("spark.sql.shuffle.partitions", Constants.ads_shuffle_partitions)
     //conf.set("spark.sql.broadcastTimeout", "1800")//广播超时时间延长至半小时
     conf.set("spark.sql.autoBroadcastJoinThreshold", "-1")//禁止广播
-    //禁止小表广播。龚波
+    //禁止小表广播。
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     //获取今日、昨天的日期
     val format = new SimpleDateFormat("yyyyMMdd")
