@@ -7,12 +7,12 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
   * 将172.30.0.9上Mysql中user_db库中的p_user全量业务用户表导入数仓的ods
   * 层的ods_product_user的put_date=20190000分区中
   */
-object CompanyDimDate2DW {
+object DimCompanyDate2DW {
 
   def main(args: Array[String]): Unit = {
 
 
-    val conf = new SparkConf().setAppName("RUN-MysqlJxwPlatfromResource2DataWarehouse")
+    val conf = new SparkConf().setAppName("RUN-DimCompanyDate2DW")
     val spark = SparkSession.builder().config(conf).enableHiveSupport().getOrCreate()
     val props = new java.util.Properties
     val tableName = "p_customer"
@@ -32,7 +32,7 @@ object CompanyDimDate2DW {
       7,
       8,
       9
-    ).map(x => s"mod(ymd,10)=${x}")
+    ).map(x => s"mod(s_state,10)=${x}")
 
     val mysqlReadDF: DataFrame = spark.read.format("jdbc").jdbc(props.getProperty("url"),tableName,predicates,props)
 
@@ -52,17 +52,18 @@ object CompanyDimDate2DW {
     //将临时表写入数仓
     val etlSql =
       s"""
-         |select DISTINCT t.product_id,t.product_name from (
-         |select `key` as product_id,`name` as product_name from p_customer
+         |select DISTINCT t.company as company,t.company_name as company_name from (
+         |select key as company,name as company_name from dim_company_tmp
          |union all
-         |select `key_new` as product_id,`name` as product_name from p_customer
+         |select key_new as company,name as company_name from dim_company_tmp
          |union all
-         |select `key_old` as product_id,`name` as product_name from p_customer) t where COALESCE(t.product_id) !=''
+         |select key_old as company,name as company_name from dim_company_tmp) t where COALESCE(t.company) !=''
        """.stripMargin
 
     val etlDF: DataFrame = spark.sql(etlSql)
 
     val writeDF = etlDF.coalesce(1)
+    writeDF.show(1000)
     writeDF.write.mode("overwrite").parquet("hdfs://emr-cluster/user/hive/warehouse/dim.db/dim_company")
 
     spark.stop()
